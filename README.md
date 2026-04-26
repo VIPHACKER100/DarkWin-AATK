@@ -119,4 +119,4 @@ This tool is provided for **educational and authorized security testing purposes
 
 ## License
 
-MIT License — © 2025 **ARYAN AHIRWAR (VIPHACKER.100)**
+MIT License — © 2026 **ARYAN AHIRWAR (VIPHACKER.100)**
