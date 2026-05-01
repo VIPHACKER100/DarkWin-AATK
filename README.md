@@ -37,7 +37,7 @@ darkwin run bounty --target example.com
 
 ```bash
 git clone https://github.com/VIPHACKER100/DarkWin-AATK
-cd DARKWIN
+cd DarkWin-AATK
 ```
 
 ### 2. Run the setup script (installs all tools + wordlists)
