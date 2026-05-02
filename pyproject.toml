@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "darkwin"
-version = "1.0.0"
+version = "1.1.0"
 description = "Advanced Automation Toolkit for ethical hackers and bug bounty hunters"
 readme = "README.md"
 license = { text = "MIT" }
@@ -18,6 +18,9 @@ dependencies = [
     "click>=8.1.7",
     "jinja2>=3.1.2",
     "loguru>=0.7.2",
+    "flask>=3.0.0",
+    "flask-socketio>=5.3.6",
+    "flask-cors>=4.0.0",
 ]
 
 [project.scripts]

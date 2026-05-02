@@ -113,10 +113,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `darkwin doctor --fix` — Added automated dependency installation for missing tools on Linux/WSL.
 - `core/setup_wizard.py` — Implementation of the interactive setup logic.
 - Parallel Execution — Refactored `recon_pipeline.py` to run OSINT, Cloud Discovery, and Lookups concurrently using `ThreadPoolExecutor`.
+- **DARKWIN Control Center** — New Next.js web dashboard with real-time log streaming via Socket.IO.
+- `dashboard/frontend` — Full Next.js frontend implementation with a hacker-themed HUD.
+- `darkwin dashboard` — CLI command to launch the web interface.
 
 ### Fixed
 
 - `core/logger.py` — Fixed `ValueError` when registering the `SUCCESS` log level multiple times.
+- `cloud_enum` path issue — Fixed "Cannot access mutations file" error by auto-detecting the wordlist path.
 - Improved error handling in the execution engine for better CLI feedback.
 
 ---

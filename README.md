@@ -29,6 +29,7 @@ darkwin run bounty --target example.com
 | Cloud          | cloud_enum                               |
 | Reporting      | HTML + Markdown auto-reports             |
 | Concurrency    | Parallel stage execution (ThreadPool)     |
+| Dashboard      | Real-time web UI (Next.js + Socket.IO)    |
 
 ---
 
@@ -86,7 +87,32 @@ darkwin doctor --fix
 
 # Update DARKWIN and tools
 darkwin update
+
+# Launch the Web Dashboard
+darkwin dashboard
 ```
+
+---
+
+## ⚡ Advanced Commands
+
+| Command | Description |
+|---------|-------------|
+| `darkwin setup` | Launch interactive wizard for API keys and paths. |
+| `darkwin doctor --fix` | Automatically install missing Go/Python/apt dependencies. |
+| `darkwin dashboard` | Start the Flask backend and Next.js frontend Control Center. |
+| `darkwin run --mode bounty --target site.com --confirm-scope` | Run bounty mode with automatic authorization confirmation. |
+| `darkwin run --mode recon --target site.com --dashboard` | Run a scan and stream live logs to the dashboard. |
+
+---
+
+## 🖥️ Web Dashboard (Control Center)
+
+DARKWIN v1.1.0 includes a modern Next.js dashboard for real-time monitoring.
+
+1. **Start the backend**: `darkwin dashboard`
+2. **Start the frontend**: `cd dashboard/frontend && npm run dev`
+3. **Access**: [http://localhost:3000](http://localhost:3000)
 
 ---
 
