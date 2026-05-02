@@ -28,6 +28,7 @@ darkwin run bounty --target example.com
 | Network        | nmap, masscan, enum4linux                |
 | Cloud          | cloud_enum                               |
 | Reporting      | HTML + Markdown auto-reports             |
+| Concurrency    | Parallel stage execution (ThreadPool)     |
 
 ---
 
@@ -55,13 +56,13 @@ venv\Scripts\activate     # Windows
 
 ### 4. Configure API keys
 
-Edit `core/config.yaml`:
+Run the interactive setup wizard:
 
-```yaml
-api_keys:
-  github_token: "YOUR_GITHUB_TOKEN"
-  hibp_api_key: "YOUR_HIBP_KEY"
+```bash
+darkwin setup
 ```
+
+Alternatively, edit `core/config.yaml` manually.
 
 ---
 
@@ -79,6 +80,9 @@ darkwin run bounty --target example.com
 
 # Verify all tools are installed
 darkwin doctor
+
+# Automatically fix missing dependencies (Linux/WSL)
+darkwin doctor --fix
 
 # Update DARKWIN and tools
 darkwin update

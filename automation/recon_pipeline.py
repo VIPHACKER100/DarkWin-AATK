@@ -63,18 +63,22 @@ def run(target: str, output_dir: str = None) -> str:
 
     log.info(f"=== RECON PIPELINE START | Target: {target} | Output: {output_dir} ===")
 
+    import concurrent.futures
+
     # ── Stage 1: OSINT ───────────────────────────────────────────────────────
-    log.info("[1/10] OSINT gathering")
-    email_harvester.run(target, output_dir)
-    metadata_scraper.run(target, output_dir)
-    social_media_enum.run(target, output_dir)
-    breach_lookup.run(target, output_dir)
+    log.info("[1/10] OSINT gathering (Parallel)")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        executor.submit(email_harvester.run, target, output_dir)
+        executor.submit(metadata_scraper.run, target, output_dir)
+        executor.submit(social_media_enum.run, target, output_dir)
+        executor.submit(breach_lookup.run, target, output_dir)
 
     # ── Stage 2: Cloud Discovery ─────────────────────────────────────────────
-    log.info("[2/10] Cloud discovery")
-    aws_enum.run(target, output_dir)
-    azure_enum.run(target, output_dir)
-    gcp_enum.run(target, output_dir)
+    log.info("[2/10] Cloud discovery (Parallel)")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        executor.submit(aws_enum.run, target, output_dir)
+        executor.submit(azure_enum.run, target, output_dir)
+        executor.submit(gcp_enum.run, target, output_dir)
 
     # ── Stage 3: Subdomain Enumeration ──────────────────────────────────────
     log.info("[3/10] Subdomain enumeration")
@@ -85,19 +89,18 @@ def run(target: str, output_dir: str = None) -> str:
     wordlist = config.get("wordlists", {}).get("dns", "")
     dns_bruteforce.run(target, output_dir, wordlist=wordlist if wordlist else None)
 
-    # ── Stage 5: ASN / Reverse IP / WHOIS ───────────────────────────────────
-    log.info("[5/10] ASN lookup")
-    asn_lookup.run(target, output_dir)
-    log.info("[5/10] Reverse IP lookup")
-    reverse_ip.run(target, output_dir)
-    log.info("[5/10] WHOIS lookup")
-    whois_lookup.run(target, output_dir)
+    # ── Stage 5: Lookups ───────────────────────────────────
+    log.info("[5/10] ASN, Reverse IP, and WHOIS lookups (Parallel)")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        executor.submit(asn_lookup.run, target, output_dir)
+        executor.submit(reverse_ip.run, target, output_dir)
+        executor.submit(whois_lookup.run, target, output_dir)
 
     # ── Stage 6: GitHub Dorking + S3 Buckets ────────────────────────────────
-    log.info("[6/10] GitHub dorking")
-    github_dorking.run(target, output_dir)
-    log.info("[6/10] S3 bucket scan")
-    s3_bucket_scan.run(target, output_dir)
+    log.info("[6/10] GitHub dorking & S3 scanning (Parallel)")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        executor.submit(github_dorking.run, target, output_dir)
+        executor.submit(s3_bucket_scan.run, target, output_dir)
 
     # ── Stage 7: URL Collection ──────────────────────────────────────────────
     log.info("[7/10] URL collection (gau + waybackurls)")

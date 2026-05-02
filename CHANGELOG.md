@@ -105,6 +105,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.1.0] — 2026-05-02
+
+### Added
+
+- `darkwin setup` — New interactive configuration wizard to set up API keys and directories.
+- `darkwin doctor --fix` — Added automated dependency installation for missing tools on Linux/WSL.
+- `core/setup_wizard.py` — Implementation of the interactive setup logic.
+- Parallel Execution — Refactored `recon_pipeline.py` to run OSINT, Cloud Discovery, and Lookups concurrently using `ThreadPoolExecutor`.
+
+### Fixed
+
+- `core/logger.py` — Fixed `ValueError` when registering the `SUCCESS` log level multiple times.
+- Improved error handling in the execution engine for better CLI feedback.
+
+---
+
 ## [Planned] — Phase 2 AI Features
 
 See `docs/AI_MODULE_SPEC.md` for the planned AI module specification.
