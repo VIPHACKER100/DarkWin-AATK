@@ -60,7 +60,7 @@ def setup_logger(log_dir: str = "logs", tool_name: str = "darkwin", target: str 
     # Custom SUCCESS level (green, level 25 between INFO=20 and WARNING=30)
     try:
         logger.level("SUCCESS", no=25, color="<green>", icon="✓")
-    except TypeError:
+    except ValueError:
         pass  # Already registered
 
     # Console sink — pretty colored output
