@@ -24,8 +24,11 @@ def run(target: str, output_dir: str) -> None:
 
     log.info(f"Starting AWS enumeration for keyword: {target}")
 
+    from modules.cloud.utils import get_cloud_enum_mutations_flag
+    mutations = get_cloud_enum_mutations_flag()
+
     engine.run_command(
-        f"cloud_enum -k {target} --disable-azure --disable-gcp -l {out_file}",
+        f"cloud_enum -k {target} --disable-azure --disable-gcp {mutations} -l {out_file}",
         log_file=log_file,
         tool_name="cloud_enum-aws",
         target=target,
