@@ -24,7 +24,7 @@ BANNER = """
 def print_banner():
     console.print(Text(BANNER, style="bold cyan"))
     console.print(
-        "  [bold white]DARKWIN v1.0.0[/bold white] — [dim]Advanced Automation Toolkit[/dim]"
+        "  [bold white]DARKWIN v1.1.0[/bold white] — [dim]Advanced Automation Toolkit[/dim]"
     )
     console.print(
         "  [bold cyan]Developed by: ARYAN AHIRWAR (VIPHACKER.100)[/bold cyan]\n"
@@ -32,7 +32,7 @@ def print_banner():
 
 
 @click.group()
-@click.version_option("1.0.0", prog_name="DARKWIN")
+@click.version_option("1.1.0", prog_name="DARKWIN")
 def cli():
     """DARKWIN — Advanced Automation Toolkit for authorized security testing."""
     print_banner()
@@ -122,20 +122,56 @@ def setup():
     run_setup_wizard()
 
 
-def _start_dashboard():
+@cli.command()
+@click.option("--port", default=5000, help="Port for the dashboard backend.")
+def dashboard(port):
+    """Launch the DARKWIN web dashboard (Backend + Frontend info)."""
+    import webbrowser
+    console.print("[bold cyan]Initializing DARKWIN Dashboard...[/bold cyan]")
+    
+    # 1. Start the Flask backend
+    _start_dashboard(port=port)
+    
+    # 2. Inform user about the frontend
+    console.print("\n[bold white]Backend API:[/bold white]   [cyan]http://localhost:" + str(port) + "[/cyan]")
+    console.print("[bold white]Frontend GUI:[/bold white]  [cyan]http://localhost:3000[/cyan]")
+    console.print("\n[dim]To start the frontend, run:[/dim]")
+    console.print("  [bold green]cd dashboard/frontend && npm run dev[/bold green]")
+    
+    if click.confirm("\nOpen dashboard in browser?", default=True):
+        webbrowser.open("http://localhost:3000")
+        
+    # Keep main thread alive
+    import time
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Shutting down dashboard...[/yellow]")
+        sys.exit(0)
+
+
+def _start_dashboard(port=5000):
     """Start the Flask dashboard backend in a background thread."""
     import threading
     try:
         from dashboard.backend.app import create_app
         app, socketio = create_app()
+        # Disable logging for cleaner output
+        import logging
+        log = logging.getLogger('werkzeug')
+        log.setLevel(logging.ERROR)
+        
         thread = threading.Thread(
-            target=lambda: socketio.run(app, host="0.0.0.0", port=5000, debug=False),
+            target=lambda: socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True),
             daemon=True,
         )
         thread.start()
-        console.print("[bold green]Dashboard running at http://localhost:5000[/bold green]")
+        console.print(f"[bold green]✔ Backend running on port {port}[/bold green]")
     except ImportError:
-        console.print("[yellow]Dashboard module not available. Skipping.[/yellow]")
+        console.print("[bold red]✗ Dashboard dependencies missing.[/bold red]")
+        console.print("[dim]Run: pip install flask flask-socketio flask-cors[/dim]")
+        sys.exit(1)
 
 
 def main():
