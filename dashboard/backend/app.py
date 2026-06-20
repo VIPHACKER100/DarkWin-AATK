@@ -33,6 +33,14 @@ def create_app(reports_dir: str = "reports", logs_dir: str = "logs"):
 
     # ── REST Endpoints ──────────────────────────────────────────────────────
 
+    logs_base = Path(logs_dir).resolve()
+
+    def _safe_log_path(scan_id: str) -> Path:
+        candidate = (logs_base / f"{scan_id}.log").resolve()
+        if candidate != logs_base and logs_base not in candidate.parents:
+            abort(400, description="Invalid scan_id")
+        return candidate
+
     @app.route("/targets", methods=["GET"])
     def list_targets():
         """Return list of all scan output directories."""
@@ -60,7 +68,7 @@ def create_app(reports_dir: str = "reports", logs_dir: str = "logs"):
     @app.route("/status/<scan_id>", methods=["GET"])
     def get_status(scan_id: str):
         """Return the last 100 lines of the log file for a scan session."""
-        log_path = Path(logs_dir) / f"{scan_id}.log"
+        log_path = _safe_log_path(scan_id)
         if not log_path.exists():
             return jsonify({"error": "Log not found", "scan_id": scan_id}), 404
 
@@ -77,7 +85,10 @@ def create_app(reports_dir: str = "reports", logs_dir: str = "logs"):
     def handle_subscribe(data):
         """Client subscribes to real-time updates for a scan session log."""
         scan_id = data.get("scan_id", "")
-        log_path = Path(logs_dir) / f"{scan_id}.log"
+        try:
+            log_path = _safe_log_path(scan_id)
+        except Exception:
+            return
 
         def tail_log():
             pos = 0
