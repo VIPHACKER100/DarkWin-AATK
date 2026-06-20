@@ -14,6 +14,20 @@ from core.logger import get_logger
 _log = get_logger(tool_name="engine", target="system")
 
 
+def _safe_command_for_log(cmd: str) -> str:
+    """
+    Return a redacted representation of a command for safe logging.
+    Keeps only the executable and hides arguments.
+    """
+    try:
+        parts = shlex.split(cmd)
+        if not parts:
+            return "[EMPTY_CMD]"
+        return f"{parts[0]} [REDACTED_ARGS]"
+    except Exception:
+        return "[UNPARSEABLE_CMD]"
+
+
 def run_command(
     cmd: str,
     log_file: str,
@@ -37,14 +51,15 @@ def run_command(
         Process exit code (0 = success, non-zero = failure).
     """
     log = get_logger(tool_name=tool_name, target=target)
-    log.info(f"▶ Running: {cmd}")
+    safe_cmd = _safe_command_for_log(cmd)
+    log.info(f"▶ Running: {safe_cmd}")
 
     log_path = Path(log_file)
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
         with open(log_path, "a", encoding="utf-8") as lf:
-            lf.write(f"\n[CMD] {cmd}\n")
+            lf.write(f"\n[CMD] {safe_cmd}\n")
             lf.write("=" * 60 + "\n")
 
             result = subprocess.run(
@@ -58,14 +73,14 @@ def run_command(
 
         exit_code = result.returncode
         if exit_code == 0:
-            log.success(f"✓ Completed (exit 0): {cmd[:60]}...")
+            log.success(f"✓ Completed (exit 0): {safe_cmd}")
         else:
-            log.error(f"✗ Failed (exit {exit_code}): {cmd[:60]}...")
+            log.error(f"✗ Failed (exit {exit_code}): {safe_cmd}")
 
         return exit_code
 
     except subprocess.TimeoutExpired:
-        log.error(f"⏱ Timeout expired for command: {cmd[:60]}...")
+        log.error(f"⏱ Timeout expired for command: {safe_cmd}")
         return -1
 
     except FileNotFoundError as e:
