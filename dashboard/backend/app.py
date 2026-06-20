@@ -70,7 +70,9 @@ def create_app(reports_dir: str = "reports", logs_dir: str = "logs"):
 
         reports_base = Path(reports_dir).resolve()
         report_path = (reports_base / target / session / "report.html").resolve()
-        if report_path != reports_base and reports_base not in report_path.parents:
+        try:
+            report_path.relative_to(reports_base)
+        except ValueError:
             abort(400, description="Invalid report path")
 
         if not report_path.exists():
