@@ -49,4 +49,4 @@ def test_get_output_dir_creates_directory(tmp_path):
     config = {"output_dir": str(tmp_path / "reports")}
     out = get_output_dir(config, "example.com", "2025-01-01_12-00-00")
     assert Path(out).exists()
-    assert "example.com" in out
+    assert "example.com" in Path(out).parts
