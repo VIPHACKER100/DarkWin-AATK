@@ -12,7 +12,9 @@ export const getTargets = async () => {
 };
 
 export const getReportUrl = (target: string, session: string) => {
-  return `${API_BASE}/report/${target}/${session}`;
+  const safeTarget = encodeURIComponent(target);
+  const safeSession = encodeURIComponent(session);
+  return `${API_BASE}/report/${safeTarget}/${safeSession}`;
 };
 
 export const getStatus = async (scanId: string) => {
