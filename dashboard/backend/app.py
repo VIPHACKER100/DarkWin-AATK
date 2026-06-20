@@ -63,7 +63,18 @@ def create_app(reports_dir: str = "reports", logs_dir: str = "logs"):
     @app.route("/report/<target>/<session>", methods=["GET"])
     def get_report(target: str, session: str):
         """Return the HTML report for a specific target/session."""
-        report_path = Path(reports_dir) / target / session / "report.html"
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", target):
+            abort(400, description="Invalid target")
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", session):
+            abort(400, description="Invalid session")
+
+        reports_base = Path(reports_dir).resolve()
+        report_path = (reports_base / target / session / "report.html").resolve()
+        try:
+            report_path.relative_to(reports_base)
+        except ValueError:
+            abort(400, description="Invalid report path")
+
         if not report_path.exists():
             abort(404, description=f"Report not found: {report_path}")
         return send_file(str(report_path), mimetype="text/html")
