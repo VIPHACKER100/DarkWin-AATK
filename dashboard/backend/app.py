@@ -6,6 +6,7 @@ Flask REST API with SocketIO real-time log streaming.
 """
 
 import os
+import re
 import threading
 import time
 from pathlib import Path
@@ -36,6 +37,8 @@ def create_app(reports_dir: str = "reports", logs_dir: str = "logs"):
     logs_base = Path(logs_dir).resolve()
 
     def _safe_log_path(scan_id: str) -> Path:
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", scan_id):
+            abort(400, description="Invalid scan_id")
         candidate = (logs_base / f"{scan_id}.log").resolve()
         if candidate != logs_base and logs_base not in candidate.parents:
             abort(400, description="Invalid scan_id")
