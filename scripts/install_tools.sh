@@ -33,10 +33,15 @@ install_go_tool() {
     else
         info "Installing $name via go install..."
         go install "$pkg" 2>/dev/null
-        # Symlink to /usr/local/bin if running as root
-        [ -f "$GOPATH/bin/$name" ] && ln -sf "$GOPATH/bin/$name" /usr/local/bin/ 2>/dev/null || true
-        _check "$name" && success "$name installed" || error "Failed to install $name"
     fi
+    # Always symlink to /usr/local/bin when run as root, so the tool is
+    # available on every user's PATH (not just root's GOPATH/bin).
+    if [[ $EUID -eq 0 ]]; then
+        for dir in "$GOPATH/bin" "/root/go/bin"; do
+            [ -f "$dir/$name" ] && ln -sf "$dir/$name" /usr/local/bin/ && break
+        done
+    fi
+    _check "$name" || error "Failed to install $name"
 }
 
 install_apt() {
@@ -47,6 +52,10 @@ install_apt() {
     else
         info "Installing $pkg via apt..."
         apt-get install -y "$pkg" &>/dev/null && _check "$binary" && success "$pkg installed" || error "Failed to install $pkg"
+    fi
+    # Symlink apt-installed Go binaries too (e.g. amass installs to /root/go)
+    if [[ $EUID -eq 0 ]] && [ -f "/root/go/bin/$binary" ] && ! _check "$binary"; then
+        ln -sf "/root/go/bin/$binary" /usr/local/bin/ 2>/dev/null || true
     fi
 }
 
