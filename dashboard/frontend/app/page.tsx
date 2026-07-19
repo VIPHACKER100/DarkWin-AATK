@@ -265,10 +265,10 @@ export default function Dashboard() {
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={cn(
-                        "w-7 h-7 rounded-lg flex items-center justify-center transition-colors",
-                        selectedTarget === t.target ? "bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF]" : "bg-[var(--muted)]"
+                        "w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300",
+                        selectedTarget === t.target ? "bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF] group-hover:scale-110" : "bg-[var(--muted)] group-hover:scale-105"
                       )}>
-                        <Target className={cn("w-3.5 h-3.5", selectedTarget === t.target ? "text-white" : "text-[var(--muted-foreground)]")} />
+                        <Target className={cn("w-3.5 h-3.5 transition-transform duration-300", selectedTarget === t.target ? "text-white" : "text-[var(--muted-foreground)]")} />
                       </div>
                       <span className={cn("text-sm truncate", selectedTarget === t.target ? "font-medium text-white" : "text-[var(--muted-foreground)]")}>
                         {t.target}
@@ -277,8 +277,8 @@ export default function Dashboard() {
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <span className="font-mono-label text-[10px] text-[var(--muted-foreground)]/50">{t.sessions.length}</span>
                       <ChevronRight className={cn(
-                        "w-3.5 h-3.5 transition-all",
-                        selectedTarget === t.target ? "translate-x-0 text-[var(--accent)]" : "translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 text-[var(--muted-foreground)]/40"
+                        "w-3.5 h-3.5 transition-all duration-300",
+                        selectedTarget === t.target ? "translate-x-0 text-[var(--accent)]" : "-translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 text-[var(--muted-foreground)]/40"
                       )} />
                     </div>
                   </button>
@@ -386,7 +386,7 @@ export default function Dashboard() {
                   {currentTarget.sessions.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
                 </select>
                 <Button size="sm" onClick={() => selectedSession && handleSubscribe(selectedSession)}>
-                  <Zap className="w-3.5 h-3.5" /> Listen
+                  <Zap className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" /> Listen
                 </Button>
                 {selectedSession && (
                   <button
@@ -473,32 +473,39 @@ export default function Dashboard() {
           {/* ── Current Scan Progress ── */}
           {currentScan.status === "running" && (
             <AnimatedSection>
-              <div className="rounded-xl border border-[var(--accent)]/20 bg-gradient-to-br from-[var(--accent)]/5 to-transparent p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF] flex items-center justify-center animate-pulse shadow-[0_4px_14px_rgba(0,82,255,0.2)]">
-                      <Activity className="w-5 h-5 text-white" />
+              <div className="relative rounded-xl border border-[var(--accent)]/20 bg-[var(--foreground)] text-[var(--background)] overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, rgba(0,82,255,0.05) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+                <div className="relative z-10 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF] flex items-center justify-center shadow-[var(--shadow-accent)]"
+                        animate={{ y: [0, -3, 0] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                      >
+                        <Activity className="w-5 h-5 text-white" />
+                      </motion.div>
+                      <div>
+                        <p className="font-display text-base text-[var(--background)]"><GradientText>{currentScan.mode?.toUpperCase()}</GradientText> scan</p>
+                        <p className="font-mono-label text-xs text-[var(--background)]/50">{currentScan.target}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-display text-base"><GradientText>{currentScan.mode?.toUpperCase()}</GradientText> scan</p>
-                      <p className="font-mono-label text-xs text-[var(--muted-foreground)]/60">{currentScan.target}</p>
-                    </div>
+                    <span className="font-mono-label text-[10px] text-[var(--background)]/40 bg-[var(--background)]/5 px-3 py-1.5 rounded-lg border border-[var(--background)]/10">
+                      {currentScan.phase}
+                    </span>
                   </div>
-                  <span className="font-mono-label text-[10px] text-[var(--muted-foreground)]/50 bg-[var(--muted)]/50 px-3 py-1.5 rounded-lg">
-                    {currentScan.phase}
-                  </span>
+                  <div className="w-full h-2 rounded-full bg-[var(--background)]/10 overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-[var(--accent)] to-[#4D7CFF]"
+                      initial={{ width: "5%" }}
+                      animate={{ width: currentScan.phase === "done" ? "100%" : "60%" }}
+                      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    />
+                  </div>
+                  <p className="mt-3 font-mono-label text-[11px] text-[var(--background)]/40">
+                    Phase: {currentScan.phase || "starting..."}
+                  </p>
                 </div>
-                <div className="w-full h-2 rounded-full bg-[var(--muted)] overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-[var(--accent)] to-[#4D7CFF]"
-                    initial={{ width: "5%" }}
-                    animate={{ width: currentScan.phase === "done" ? "100%" : "60%" }}
-                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                  />
-                </div>
-                <p className="mt-3 font-mono-label text-[11px] text-[var(--muted-foreground)]/50">
-                  Phase: {currentScan.phase || "starting..."}
-                </p>
               </div>
             </AnimatedSection>
           )}
@@ -621,9 +628,13 @@ export default function Dashboard() {
           ) : (
             <AnimatedSection delay={0.2}>
               <div className="flex-1 flex flex-col items-center justify-center gap-5 min-h-[400px]">
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[var(--accent)]/10 to-[#4D7CFF]/5 border border-[var(--accent)]/20 flex items-center justify-center">
+                <motion.div
+                  className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[var(--accent)]/10 to-[#4D7CFF]/5 border border-[var(--accent)]/20 flex items-center justify-center"
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                >
                   <Search className="w-10 h-10 text-[var(--accent)]/40" />
-                </div>
+                </motion.div>
                 <div className="text-center">
                   <h2 className="font-display text-2xl text-[var(--muted-foreground)]/60 mb-2">No <GradientText>Data</GradientText> Available</h2>
                   <p className="font-mono-label text-sm text-[var(--muted-foreground)]/30 max-w-xs">

@@ -7,24 +7,40 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({ className, elevated, featured, children, ...props }: CardProps) {
+  const shared = "rounded-xl border transition-all duration-300 group";
+  const hover = "hover:shadow-xl hover:-translate-y-0.5";
+
+  if (featured) {
+    return (
+      <div
+        className={cn(
+          "relative rounded-xl bg-gradient-to-br from-[var(--accent)] via-[var(--accent-secondary)] to-[var(--accent)] p-[2px] shadow-[var(--shadow-accent-lg)]",
+          className
+        )}
+        {...props}
+      >
+        <div className={cn(shared, "h-full w-full rounded-[calc(0.75rem-2px)] bg-[var(--card)] border-0", hover)}>
+          <div className="absolute inset-0 rounded-[calc(0.75rem-2px)] bg-gradient-to-br from-[var(--accent)]/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
-        "rounded-xl border bg-[var(--card)] transition-all duration-200",
-        featured
-          ? "relative bg-gradient-to-br from-[var(--accent)] via-[var(--accent-secondary)] to-[var(--accent)] p-[2px] shadow-[0_8px_24px_rgba(0,82,255,0.2)]"
-          : elevated
-            ? "border-[var(--border)] shadow-md hover:shadow-xl hover:-translate-y-0.5"
-            : "border-[var(--border)] shadow-sm",
+        shared,
+        "border-[var(--border)] bg-[var(--card)] shadow-sm",
+        elevated && hover,
         className
       )}
       {...props}
     >
-      {featured ? (
-        <div className="h-full w-full rounded-[calc(0.75rem-2px)] bg-[var(--card)]">
-          {children}
-        </div>
-      ) : children}
+      {elevated && (
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[var(--accent)]/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      )}
+      {children}
     </div>
   );
 }
