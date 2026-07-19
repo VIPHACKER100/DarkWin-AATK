@@ -1,23 +1,40 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
-  --background: #0a0a0f;
-  --foreground: #f1f5f9;
-  --muted: #1e1e2a;
-  --muted-foreground: #94a3b8;
-  --accent: #0052FF;
-  --accent-secondary: #4D7CFF;
-  --accent-foreground: #ffffff;
-  --border: #2a2a3a;
-  --card: #12121a;
-  --card-foreground: #f1f5f9;
-  --ring: #0052FF;
-  --radius: 0.75rem;
+@theme {
+  /* Minimalist Modern Light Theme Tokens */
+  --color-background: #FAFAFA;
+  --color-foreground: #0F172A;
+  --color-muted: #F1F5F9;
+  --color-muted-foreground: #64748B;
+  --color-accent: #0052FF;
+  --color-accent-secondary: #4D7CFF;
+  --color-accent-foreground: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #0F172A;
+  --color-ring: #0052FF;
 
+  --radius-xl: 0.75rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.08);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.1);
   --shadow-accent: 0 4px 14px rgba(0, 82, 255, 0.25);
   --shadow-accent-lg: 0 8px 24px rgba(0, 82, 255, 0.35);
+}
+
+:root {
+  --background: #FAFAFA;
+  --foreground: #0F172A;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #0052FF;
+  --accent-secondary: #4D7CFF;
+  --border: #E2E8F0;
+  --card: #FFFFFF;
+  --ring: #0052FF;
 }
 
 body {
@@ -35,10 +52,29 @@ body {
 .font-display { font-family: 'Calistoga', Georgia, serif; }
 .font-mono-label { font-family: 'JetBrains Mono', monospace; }
 
+/* Gradient Text Effect */
+.gradient-text {
+  background: linear-gradient(to right, var(--accent), var(--accent-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Gradient underline bar */
+.gradient-underline {
+  position: absolute;
+  bottom: -0.25rem;
+  left: 0;
+  height: 0.75rem;
+  width: 100%;
+  border-radius: 0.125rem;
+  background: linear-gradient(to right, rgba(0, 82, 255, 0.15), rgba(77, 124, 255, 0.1));
+}
+
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #555; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

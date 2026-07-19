@@ -31,7 +31,7 @@ export function Card({ className, elevated, featured, children, ...props }: Card
     <div
       className={cn(
         shared,
-        "border-[var(--border)] bg-[var(--card)] shadow-sm",
+        "border-[var(--border)] bg-[var(--card)] shadow-md",
         elevated && hover,
         className
       )}

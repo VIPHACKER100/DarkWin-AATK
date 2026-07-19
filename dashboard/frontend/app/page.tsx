@@ -17,9 +17,7 @@ import { socket } from "@/lib/socket";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { AnimatedSection, StaggerContainer, StaggerItem } from "@/components/animated-section";
-import { SectionLabel } from "@/components/section-label";
 
 interface SessionInfo { name: string; hasReport: boolean; modified: string; }
 interface TargetData { target: string; sessions: SessionInfo[]; }
@@ -30,7 +28,7 @@ let toastId = 0;
 
 function GradientText({ children, className }: { children: string; className?: string }) {
   return (
-    <span className={cn("bg-gradient-to-r from-[var(--accent)] to-[#4D7CFF] bg-clip-text text-transparent", className)}>
+    <span className={cn("gradient-text", className)}>
       {children}
     </span>
   );
@@ -55,7 +53,7 @@ export default function Dashboard() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval>>();
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scanInputRef = useRef<HTMLInputElement>(null);
 
   const addToast = useCallback((type: Toast["type"], message: string) => {
@@ -78,6 +76,7 @@ export default function Dashboard() {
   }, [selectedTarget]);
 
   useEffect(() => {
+    // eslint-disable-next-line
     fetchData();
     socket.connect();
     getScanHistory().then(setScanHistory).catch(() => {});
@@ -115,18 +114,9 @@ export default function Dashboard() {
         try { setCurrentScan(await getCurrentScan()); }
         catch { /* ignore */ }
       }, 3000);
-      return () => clearInterval(pollRef.current);
+      return () => { if (pollRef.current) clearInterval(pollRef.current); };
     }
   }, [socketStatus]);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && e.target === scanInputRef.current) handleStartScan();
-      if (e.key === "Escape") setLogs([]);
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  });
 
   const handleSubscribe = (session: string) => {
     if (!selectedTarget) return;
@@ -142,10 +132,20 @@ export default function Dashboard() {
       const result = await startScan(scanTarget.trim(), scanMode);
       setCurrentScan({ scan_id: result.scan_id, target: result.target, mode: result.mode, status: "running", phase: "queued", started_at: new Date().toISOString() });
       socket.emit("subscribe", { scan_id: result.scan_id });
-    } catch (err: any) {
-      setStartError(err?.response?.data?.error || err?.message || "Failed to start scan");
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } }, message?: string };
+      setStartError(error?.response?.data?.error || error?.message || "Failed to start scan");
     }
   };
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && e.target === scanInputRef.current) handleStartScan();
+      if (e.key === "Escape") setLogs([]);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  });
 
   const handleRefreshTools = async () => {
     setToolStatus(null);
@@ -216,7 +216,7 @@ export default function Dashboard() {
       <aside className="w-72 lg:w-80 border-r border-[var(--border)] flex flex-col bg-[var(--card)] flex-shrink-0 relative">
         <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, rgba(0,82,255,0.03) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         <div className="relative z-10 p-5 lg:p-6 border-b border-[var(--border)] flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF] flex items-center justify-center shadow-[0_4px_14px_rgba(0,82,255,0.25)]">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-secondary)] flex items-center justify-center shadow-[0_4px_14px_rgba(0,82,255,0.25)]">
             <Shield className="w-5 h-5 text-white" />
           </div>
           <div className="min-w-0">
@@ -266,7 +266,7 @@ export default function Dashboard() {
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={cn(
                         "w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300",
-                        selectedTarget === t.target ? "bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF] group-hover:scale-110" : "bg-[var(--muted)] group-hover:scale-105"
+                        selectedTarget === t.target ? "bg-gradient-to-br from-[var(--accent)] to-[var(--accent-secondary)] group-hover:scale-110" : "bg-[var(--muted)] group-hover:scale-105"
                       )}>
                         <Target className={cn("w-3.5 h-3.5 transition-transform duration-300", selectedTarget === t.target ? "text-white" : "text-[var(--muted-foreground)]")} />
                       </div>
@@ -297,7 +297,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div className="relative z-10 p-4 border-t border-[var(--border)] bg-black/20 space-y-2">
+        <div className="relative z-10 p-4 border-t border-[var(--border)] bg-[var(--muted)]/50 space-y-2">
           <button
             onClick={() => { setShowTools(!showTools); if (!toolStatus) handleRefreshTools(); }}
             className="w-full flex items-center justify-between p-2.5 hover:bg-[var(--muted)] rounded-xl transition-colors group"
@@ -357,8 +357,8 @@ export default function Dashboard() {
 
       {/* ── Main ── */}
       <main className="flex-1 flex flex-col relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--accent)]/3 rounded-full blur-[150px] pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-[#4D7CFF]/3 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--accent)]/5 rounded-full blur-[150px] pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-[var(--accent-secondary)]/5 rounded-full blur-[150px] pointer-events-none" />
 
         <header className="relative z-10 h-[72px] border-b border-[var(--border)] flex items-center justify-between px-6 lg:px-8 bg-[var(--background)]/80 backdrop-blur-md">
           <div>
@@ -407,11 +407,11 @@ export default function Dashboard() {
             <Card featured>
               <CardContent className="p-6 lg:p-8">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF] flex items-center justify-center shadow-[0_4px_14px_rgba(0,82,255,0.2)]">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-secondary)] flex items-center justify-center shadow-[0_4px_14px_rgba(0,82,255,0.2)]">
                     <Radio className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="font-display text-xl">New <GradientText>Scan</GradientText></h2>
+                    <h2 className="font-display text-3xl">New <GradientText>Scan</GradientText></h2>
                     <p className="font-mono-label text-[11px] text-[var(--muted-foreground)]/60 mt-0.5">Press Enter to launch</p>
                   </div>
                 </div>
@@ -474,12 +474,12 @@ export default function Dashboard() {
           {currentScan.status === "running" && (
             <AnimatedSection>
               <div className="relative rounded-xl border border-[var(--accent)]/20 bg-[var(--foreground)] text-[var(--background)] overflow-hidden">
-                <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, rgba(0,82,255,0.05) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+                <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
                 <div className="relative z-10 p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <motion.div
-                        className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF] flex items-center justify-center shadow-[var(--shadow-accent)]"
+                        className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-secondary)] flex items-center justify-center shadow-[var(--shadow-accent)]"
                         animate={{ y: [0, -3, 0] }}
                         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                       >
@@ -496,7 +496,7 @@ export default function Dashboard() {
                   </div>
                   <div className="w-full h-2 rounded-full bg-[var(--background)]/10 overflow-hidden">
                     <motion.div
-                      className="h-full rounded-full bg-gradient-to-r from-[var(--accent)] to-[#4D7CFF]"
+                      className="h-full rounded-full bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)]"
                       initial={{ width: "5%" }}
                       animate={{ width: currentScan.phase === "done" ? "100%" : "60%" }}
                       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
@@ -584,36 +584,37 @@ export default function Dashboard() {
                   )}
 
                   {/* ── Terminal ── */}
-                  <Card>
-                    <div className="px-5 py-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--muted)]/30">
+                  <Card className="bg-[var(--foreground)] border-transparent overflow-hidden relative">
+                    <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+                    <div className="relative z-10 px-5 py-3.5 border-b border-white/10 flex items-center justify-between bg-black/20">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF] flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[var(--accent-secondary)] flex items-center justify-center shadow-[var(--shadow-accent)]">
                           <Terminal className="w-4 h-4 text-white" />
                         </div>
-                        <span className="font-mono-label text-xs uppercase tracking-[0.1em] text-[var(--muted-foreground)]">Live Output</span>
+                        <span className="font-mono-label text-xs uppercase tracking-[0.1em] text-white/70">Live Output</span>
                       </div>
-                      <div className="flex items-center gap-4 font-mono-label text-[10px] text-[var(--muted-foreground)]/50">
+                      <div className="flex items-center gap-4 font-mono-label text-[10px] text-white/50">
                         <button
                           onClick={() => setAutoScroll(!autoScroll)}
-                          className={cn("flex items-center gap-1.5 hover:text-[var(--muted-foreground)] transition-colors", !autoScroll && "text-[var(--muted-foreground)]/30")}
+                          className={cn("flex items-center gap-1.5 hover:text-white/80 transition-colors", !autoScroll && "text-white/30")}
                         >
                           {autoScroll ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                           {autoScroll ? "Auto" : "Paused"}
                         </button>
                         <span>Buf: {logs.length}/500</span>
-                        <button onClick={() => setLogs([])} className="hover:text-[var(--muted-foreground)] transition-colors">Clear</button>
+                        <button onClick={() => setLogs([])} className="hover:text-white/80 transition-colors">Clear</button>
                       </div>
                     </div>
-                    <div className="h-56 overflow-y-auto p-4 font-mono text-xs leading-relaxed bg-[var(--background)]/30">
+                    <div className="relative z-10 h-56 overflow-y-auto p-4 font-mono text-xs leading-relaxed">
                       {logs.length > 0 ? (
                         logs.map((line, i) => (
                           <div key={i} className="flex gap-3 mb-0.5 group">
-                            <span className="text-[var(--muted-foreground)]/20 select-none w-7 text-right flex-shrink-0">{i + 1}</span>
-                            <p className="text-[var(--muted-foreground)]/80 break-all whitespace-pre-wrap">{line}</p>
+                            <span className="text-white/30 select-none w-7 text-right flex-shrink-0">{i + 1}</span>
+                            <p className="text-white/90 break-all whitespace-pre-wrap">{line}</p>
                           </div>
                         ))
                       ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-[var(--muted-foreground)]/30">
+                        <div className="h-full flex flex-col items-center justify-center text-white/30">
                           <Terminal className="w-8 h-8 mb-2" />
                           <p className="font-mono-label text-xs">Awaiting live connection...</p>
                           <p className="font-mono-label text-[10px] mt-1 opacity-60">Press Listen or start a scan</p>
@@ -629,7 +630,7 @@ export default function Dashboard() {
             <AnimatedSection delay={0.2}>
               <div className="flex-1 flex flex-col items-center justify-center gap-5 min-h-[400px]">
                 <motion.div
-                  className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[var(--accent)]/10 to-[#4D7CFF]/5 border border-[var(--accent)]/20 flex items-center justify-center"
+                  className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[var(--accent)]/10 to-[var(--accent-secondary)]/5 border border-[var(--accent)]/20 flex items-center justify-center"
                   animate={{ y: [0, -4, 0] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                 >
