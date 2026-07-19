@@ -8,6 +8,6 @@ def run(urls_file, output_dir):
         get_logger(tool_name="parameter_finder", target=urls_file).error(f"URLs file not found: {urls_file}")
         return
     run_tool(
-        f"arjun -i {urls_file} -o json -f json -t 10 --passive > {output_dir}/params.txt",
+        f"arjun -i {urls_file} -o {output_dir}/params.json -f json -t 10 --passive",
         output_dir, "parameter_finder", urls_file,
     )

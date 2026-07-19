@@ -11,7 +11,7 @@ def run(target, output_dir, wordlist=None):
     if not target.startswith("http"):
         target = f"https://{target}"
     run_tool(
-        f'ffuf -u {target}/api/FUZZ -w "{wordlist}" '
+        f'ffuf -u {target}/api/FUZZ -w {wordlist} '
         f"-mc all -o {output_dir}/api_fuzz.json -of json -t 40 -s",
         output_dir, "api_fuzzer", target,
     )
