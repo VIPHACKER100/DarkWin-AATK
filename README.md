@@ -36,14 +36,14 @@ darkwin run --mode bounty --target example.com
 
 ## Setup
 
-### 1. Clone the repository
+### 1. Clone and enter the repository
 
 ```bash
 git clone https://github.com/VIPHACKER100/DarkWin-AATK
 cd DarkWin-AATK
 ```
 
-### 2. Run the setup script (installs all tools + wordlists)
+### 2. Run the setup script (creates venv, installs deps, tools, wordlists)
 
 ```bash
 bash scripts/setup.sh

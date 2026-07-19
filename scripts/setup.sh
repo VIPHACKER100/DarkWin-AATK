@@ -27,7 +27,6 @@ source venv/bin/activate
 # 2. Python dependencies
 info "Installing Python dependencies..."
 pip install --upgrade pip -q
-pip install -r requirements.txt -q
 pip install -e . -q
 success "Python dependencies installed"
 
