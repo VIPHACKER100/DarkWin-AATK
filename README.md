@@ -9,9 +9,9 @@
 DARKWIN is a modular, pipeline-driven automation toolkit for ethical hackers and bug bounty hunters. It chains together industry-standard security tools (subfinder, nuclei, dalfox, sqlmap, nmap, ffuf, and 15+ more) into smart, automated pipelines.
 
 ```
-darkwin run recon  --target example.com
-darkwin run scan   --target example.com
-darkwin run bounty --target example.com
+darkwin run --mode recon  --target example.com
+darkwin run --mode scan   --target example.com
+darkwin run --mode bounty --target example.com
 ```
 
 ---
@@ -66,13 +66,13 @@ Edit `core/config.yaml` to configure API keys and paths.
 
 ```bash
 # Full recon pipeline
-darkwin run recon --target example.com
+darkwin run --mode recon --target example.com
 
 # Full vulnerability scan
-darkwin run scan --target example.com
+darkwin run --mode scan --target example.com
 
 # Bug bounty optimized pipeline
-darkwin run bounty --target example.com
+darkwin run --mode bounty --target example.com
 
 # Verify all tools are installed
 darkwin doctor
@@ -130,7 +130,7 @@ DARKWIN/
 ├── wordlists/      # SecLists + PayloadsAllTheThings
 ├── logs/           # Session logs
 ├── reports/        # Scan output
-├── templates/      # HTML/MD report templates
+├── templates/      # HTML report template
 └── scripts/        # Install & setup scripts
 ```
 
