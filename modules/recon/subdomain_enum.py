@@ -35,7 +35,7 @@ def run(target: str, output_dir: str) -> None:
     )
 
     engine.run_command(
-        f"amass enum -passive -d {target} -o {amass_out}",
+        f"amass enum -passive -d {target} -o {amass_out} -timeout 2",
         log_file=log_file,
         tool_name="amass",
         target=target,

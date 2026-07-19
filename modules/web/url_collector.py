@@ -27,14 +27,14 @@ def run(target: str, output_dir: str) -> None:
     log.info(f"Collecting URLs for: {target}")
 
     engine.run_command(
-        f"gau {target} --subs > {gau_out}",
+        f"echo {target} | gau --subs --o {gau_out}",
         log_file=log_file,
         tool_name="gau",
         target=target,
     )
 
     engine.run_command(
-        f"waybackurls {target} > {wayback_out}",
+        f"echo {target} | waybackurls > {wayback_out}",
         log_file=log_file,
         tool_name="waybackurls",
         target=target,

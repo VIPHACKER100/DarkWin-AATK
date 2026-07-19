@@ -27,8 +27,9 @@ def run(target: str, output_dir: str) -> None:
     log.info(f"Discovering JavaScript files for: {target}")
 
     # Step 1: Collect JS file URLs
+    url = target if target.startswith("http") else f"https://{target}"
     engine.run_command(
-        f"subjs -i {target} | tee {js_files_out}",
+        f"subjs -i {url} | tee {js_files_out}",
         log_file=log_file,
         tool_name="subjs",
         target=target,
@@ -38,23 +39,32 @@ def run(target: str, output_dir: str) -> None:
         log.warning("No JavaScript files found by subjs.")
         return
 
-    # Step 2: Extract links from JS files
-    engine.run_command(
-        f"linkfinder -i {js_files_out} -o {js_links_out}",
-        log_file=log_file,
-        tool_name="linkfinder",
-        target=target,
-    )
+    # Step 2: Extract links from JS files via direct URL or file
+    if Path(js_files_out).stat().st_size > 0:
+        first_js = Path(js_files_out).read_text(encoding="utf-8").splitlines()[0].strip()
+        engine.run_command(
+            f"linkfinder -i {first_js} -o cli > {js_links_out}",
+            log_file=log_file,
+            tool_name="linkfinder",
+            target=target,
+        )
 
-    # Step 3: Search for potential secrets in JS content
-    engine.run_command(
-        f"cat {js_files_out} | xargs -I{{}} curl -s {{}} | grep -Ei "
-        f"'(api_key|apikey|secret|token|password|auth|bearer)\\s*[=:]\\s*[\"\\'][^\"\\']{{8,}}' "
-        f"> {js_secrets_out}",
-        log_file=log_file,
-        tool_name="grep-secrets",
-        target=target,
-    )
+    # Step 3: Search for potential secrets in JS files
+    grep_pattern = r'(api_key|apikey|secret|token|password|auth|bearer)\s*[=:]\s*["'"'"'][^"'"'"']{8,}'
+    if Path(js_files_out).exists() and Path(js_files_out).stat().st_size > 0:
+        for js_url in Path(js_files_out).read_text(encoding="utf-8").splitlines():
+            import subprocess
+            try:
+                result = subprocess.run(
+                    ["curl", "-s", js_url.strip()],
+                    capture_output=True, text=True, timeout=15,
+                )
+                matches = [l for l in result.stdout.splitlines() if __import__('re').search(grep_pattern, l)]
+                if matches:
+                    with open(js_secrets_out, "a", encoding="utf-8") as f:
+                        f.write(f"--- {js_url} ---\n" + "\n".join(matches) + "\n")
+            except Exception:
+                pass
 
     log.success(
         f"JS parsing complete → {js_files_out}, {js_links_out}, {js_secrets_out}"
