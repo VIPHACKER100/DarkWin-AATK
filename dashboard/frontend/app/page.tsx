@@ -5,14 +5,21 @@ import {
   Activity, Terminal, Target, FileText, Zap, Shield, Clock,
   ChevronRight, Maximize2, RefreshCcw, Search, Play, Wifi,
   WifiOff, Loader2, AlertCircle, CheckCircle2, XCircle,
-  ChevronDown, History, Layers, Trash2, Eye, EyeOff, CornerDownLeft
+  ChevronDown, History, Layers, Trash2, Eye, EyeOff, CornerDownLeft,
+  Radio, Globe, Server, Cpu
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getTargets, getReportUrl, getToolStatus, startScan,
-  getCurrentScan, getScanHistory, deleteTarget, deleteSession, API_BASE
+  getCurrentScan, getScanHistory, deleteTarget, deleteSession
 } from "@/lib/api";
 import { socket } from "@/lib/socket";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { AnimatedSection, StaggerContainer, StaggerItem } from "@/components/animated-section";
+import { SectionLabel } from "@/components/section-label";
 
 interface SessionInfo { name: string; hasReport: boolean; modified: string; }
 interface TargetData { target: string; sessions: SessionInfo[]; }
@@ -20,6 +27,14 @@ interface ScanProgress { scan_id: string | null; target: string | null; mode: st
 interface Toast { id: number; type: "success" | "error" | "info"; message: string; }
 
 let toastId = 0;
+
+function GradientText({ children, className }: { children: string; className?: string }) {
+  return (
+    <span className={cn("bg-gradient-to-r from-[var(--accent)] to-[#4D7CFF] bg-clip-text text-transparent", className)}>
+      {children}
+    </span>
+  );
+}
 
 export default function Dashboard() {
   const [targets, setTargets] = useState<TargetData[]>([]);
@@ -162,19 +177,32 @@ export default function Dashboard() {
   const currentTarget = targets.find(t => t.target === selectedTarget);
   const missingCount = toolStatus ? Object.values(toolStatus).filter(v => !v).length : 0;
   const totalTools = toolStatus ? Object.keys(toolStatus).length : 0;
-  const modeColors: Record<string, string> = { recon: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20", scan: "text-amber-400 bg-amber-500/10 border-amber-500/20", bounty: "text-rose-400 bg-rose-500/10 border-rose-500/20" };
+
+  const modeConfig: Record<string, { label: string; color: string; icon: typeof Globe }> = {
+    recon: { label: "Recon", color: "from-cyan-500 to-blue-500", icon: Globe },
+    scan: { label: "Scan", color: "from-amber-500 to-orange-500", icon: Server },
+    bounty: { label: "Bounty", color: "from-rose-500 to-pink-500", icon: Cpu },
+  };
 
   return (
-    <div className="flex h-screen w-full bg-[#050505] text-white font-sans selection:bg-cyan-500/30" onKeyDownCapture={() => {}}>
+    <div className="flex h-screen w-full bg-[var(--background)] text-[var(--foreground)] selection:bg-[var(--accent)]/30">
       {/* ── Toasts ── */}
       <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm">
         <AnimatePresence>
           {toasts.map(t => (
-            <motion.div key={t.id} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 100 }}
-              className={`px-4 py-3 rounded-lg shadow-2xl border text-sm font-mono flex items-center gap-3 ${
-                t.type === "success" ? "bg-emerald-900/90 border-emerald-700 text-emerald-200" :
-                t.type === "error" ? "bg-red-900/90 border-red-700 text-red-200" :
-                "bg-zinc-800/90 border-zinc-700 text-zinc-200"}`}>
+            <motion.div
+              key={t.id}
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className={cn(
+                "px-5 py-3 rounded-xl shadow-lg border text-sm font-medium flex items-center gap-3 backdrop-blur-md",
+                t.type === "success" && "bg-emerald-900/80 border-emerald-700/50 text-emerald-200",
+                t.type === "error" && "bg-red-900/80 border-red-700/50 text-red-200",
+                t.type === "info" && "bg-zinc-800/80 border-zinc-700/50 text-zinc-200"
+              )}
+            >
               {t.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> :
                t.type === "error" ? <AlertCircle className="w-4 h-4 text-red-400" /> :
                <Activity className="w-4 h-4 text-zinc-400" />}
@@ -185,128 +213,186 @@ export default function Dashboard() {
       </div>
 
       {/* ── Sidebar ── */}
-      <aside className="w-72 lg:w-80 border-r border-white/5 flex flex-col bg-[#0a0a0a] flex-shrink-0">
-        <div className="p-4 lg:p-6 border-b border-white/5 flex items-center gap-3">
-          <div className="w-9 h-9 lg:w-10 lg:h-10 bg-cyan-500/10 rounded-lg flex items-center justify-center border border-cyan-500/20">
-            <Shield className="w-5 h-5 lg:w-6 lg:h-6 text-cyan-400" />
+      <aside className="w-72 lg:w-80 border-r border-[var(--border)] flex flex-col bg-[var(--card)] flex-shrink-0 relative">
+        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, rgba(0,82,255,0.03) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+        <div className="relative z-10 p-5 lg:p-6 border-b border-[var(--border)] flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF] flex items-center justify-center shadow-[0_4px_14px_rgba(0,82,255,0.25)]">
+            <Shield className="w-5 h-5 text-white" />
           </div>
           <div className="min-w-0">
-            <h1 className="font-bold tracking-tight text-base lg:text-lg leading-tight">DARKWIN</h1>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-[0.2em] truncate">Control Center v1.1.0</p>
+            <h1 className="font-display text-lg leading-tight">DARKWIN</h1>
+            <p className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-[0.15em] font-mono-label truncate">Control Center</p>
           </div>
         </div>
 
-        <div className="px-4 pt-4 pb-2">
+        <div className="relative z-10 px-4 pt-4 pb-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" />
-            <input value={targetFilter} onChange={e => setTargetFilter(e.target.value)}
-              placeholder="Filter targets..." className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-xs font-mono outline-none focus:border-cyan-500/50 transition-colors placeholder:text-zinc-700" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--muted-foreground)]/50" />
+            <input
+              value={targetFilter}
+              onChange={e => setTargetFilter(e.target.value)}
+              placeholder="Filter targets..."
+              className="w-full h-10 rounded-lg border border-[var(--border)] bg-transparent pl-9 pr-3 text-xs font-mono text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]/40 outline-none transition-colors focus:border-[var(--accent)]/50"
+            />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-1">
-          <div className="flex items-center justify-between px-2 mb-2">
-            <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">Targets {filteredTargets.length > 0 && <span className="text-zinc-700">({filteredTargets.length})</span>}</span>
-            <button onClick={fetchData} className="p-1 hover:bg-white/5 rounded transition-colors">
-              <RefreshCcw className="w-3 h-3 text-zinc-500" />
+        <div className="relative z-10 flex-1 overflow-y-auto p-4 space-y-0.5">
+          <div className="flex items-center justify-between px-2 mb-3">
+            <span className="font-mono-label text-[10px] uppercase tracking-[0.15em] text-[var(--muted-foreground)]">
+              Targets
+              {filteredTargets.length > 0 && <span className="text-[var(--muted-foreground)]/50 ml-1">({filteredTargets.length})</span>}
+            </span>
+            <button onClick={fetchData} className="p-1 hover:bg-[var(--muted)] rounded transition-colors">
+              <RefreshCcw className="w-3 h-3 text-[var(--muted-foreground)]/60" />
             </button>
           </div>
           {filteredTargets.length === 0 && !loading && (
-            <p className="text-xs text-zinc-700 text-center py-8">No targets found</p>
+            <p className="text-xs text-[var(--muted-foreground)]/50 text-center py-8 font-mono">No targets found</p>
           )}
-          {filteredTargets.map(t => (
-            <div key={t.target} className="group relative">
-              <button onClick={() => { setSelectedTarget(t.target); setSelectedSession(t.sessions[0]?.name || null); }}
-                className={`w-full text-left p-3 rounded-lg flex items-center justify-between transition-all ${
-                  selectedTarget === t.target ? "bg-cyan-500/10 border border-cyan-500/20" : "hover:bg-white/5 border border-transparent"}`}>
-                <div className="flex items-center gap-3 min-w-0">
-                  <Target className={`w-4 h-4 flex-shrink-0 ${selectedTarget === t.target ? "text-cyan-400" : "text-zinc-500"}`} />
-                  <span className={`text-sm font-medium truncate ${selectedTarget === t.target ? "text-white" : "text-zinc-400"}`}>{t.target}</span>
+          <StaggerContainer>
+            {filteredTargets.map(t => (
+              <StaggerItem key={t.target}>
+                <div className="group relative">
+                  <button
+                    onClick={() => { setSelectedTarget(t.target); setSelectedSession(t.sessions[0]?.name || null); }}
+                    className={cn(
+                      "w-full text-left p-2.5 rounded-xl flex items-center justify-between transition-all duration-200",
+                      selectedTarget === t.target
+                        ? "bg-gradient-to-r from-[var(--accent)]/10 to-transparent border border-[var(--accent)]/20 shadow-sm"
+                        : "hover:bg-[var(--muted)] border border-transparent"
+                    )}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={cn(
+                        "w-7 h-7 rounded-lg flex items-center justify-center transition-colors",
+                        selectedTarget === t.target ? "bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF]" : "bg-[var(--muted)]"
+                      )}>
+                        <Target className={cn("w-3.5 h-3.5", selectedTarget === t.target ? "text-white" : "text-[var(--muted-foreground)]")} />
+                      </div>
+                      <span className={cn("text-sm truncate", selectedTarget === t.target ? "font-medium text-white" : "text-[var(--muted-foreground)]")}>
+                        {t.target}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <span className="font-mono-label text-[10px] text-[var(--muted-foreground)]/50">{t.sessions.length}</span>
+                      <ChevronRight className={cn(
+                        "w-3.5 h-3.5 transition-all",
+                        selectedTarget === t.target ? "translate-x-0 text-[var(--accent)]" : "translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 text-[var(--muted-foreground)]/40"
+                      )} />
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(`target:${t.target}`)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 rounded-lg transition-all"
+                  >
+                    <Trash2 className="w-3 h-3 text-red-500/70" />
+                  </button>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-[10px] text-zinc-700">{t.sessions.length}</span>
-                  <ChevronRight className={`w-4 h-4 transition-transform ${selectedTarget === t.target ? "translate-x-0 text-cyan-400" : "translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 text-zinc-600"}`} />
-                </div>
-              </button>
-              <button onClick={() => setConfirmDelete(`target:${t.target}`)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 rounded transition-all">
-                <Trash2 className="w-3 h-3 text-red-500" />
-              </button>
-            </div>
-          ))}
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
           {loading && Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="p-3 rounded-lg animate-pulse"><div className="h-4 bg-white/5 rounded w-3/4" /></div>
+            <div key={i} className="p-2.5 rounded-xl animate-pulse"><div className="h-4 bg-[var(--muted)] rounded w-3/4" /></div>
           ))}
         </div>
 
-        <div className="p-4 border-t border-white/5 bg-black/20 space-y-2">
-          <button onClick={() => { setShowTools(!showTools); if (!toolStatus) handleRefreshTools(); }}
-            className="w-full flex items-center justify-between p-2.5 hover:bg-white/5 rounded-lg transition-colors group">
+        <div className="relative z-10 p-4 border-t border-[var(--border)] bg-black/20 space-y-2">
+          <button
+            onClick={() => { setShowTools(!showTools); if (!toolStatus) handleRefreshTools(); }}
+            className="w-full flex items-center justify-between p-2.5 hover:bg-[var(--muted)] rounded-xl transition-colors group"
+          >
             <div className="flex items-center gap-2.5">
-              <Layers className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" />
-              <span className="text-xs text-zinc-400 group-hover:text-zinc-200">Tool Status</span>
+              <Layers className="w-4 h-4 text-[var(--muted-foreground)]/50 group-hover:text-[var(--muted-foreground)]" />
+              <span className="text-xs font-medium text-[var(--muted-foreground)]/70 group-hover:text-[var(--muted-foreground)]">Tool Status</span>
             </div>
             {toolStatus && (
               <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-mono ${missingCount === 0 ? "text-emerald-500" : "text-red-400"}`}>{totalTools - missingCount}/{totalTools}</span>
-                <ChevronDown className={`w-3.5 h-3.5 text-zinc-600 transition-transform ${showTools ? "rotate-180" : ""}`} />
+                <span className={cn("font-mono-label text-[10px]", missingCount === 0 ? "text-emerald-500" : "text-red-400")}>
+                  {totalTools - missingCount}/{totalTools}
+                </span>
+                <ChevronDown className={cn("w-3 h-3 text-[var(--muted-foreground)]/40 transition-transform", showTools && "rotate-180")} />
               </div>
             )}
           </button>
           <AnimatePresence>
             {showTools && toolStatus && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                <div className="max-h-48 overflow-y-auto space-y-1 pl-2 pr-1">
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="max-h-40 overflow-y-auto space-y-0.5 pl-2 pr-1">
                   {Object.entries(toolStatus).map(([name, ok]) => (
                     <div key={name} className="flex items-center justify-between py-1">
-                      <span className="text-[11px] font-mono text-zinc-500 truncate">{name}</span>
-                      {ok ? <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" /> : <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />}
+                      <span className="font-mono-label text-[11px] text-[var(--muted-foreground)]/60 truncate">{name}</span>
+                      {ok ? <CheckCircle2 className="w-3 h-3 text-emerald-500/70 flex-shrink-0" /> : <XCircle className="w-3 h-3 text-red-500/70 flex-shrink-0" />}
                     </div>
                   ))}
                 </div>
-                <button onClick={handleRefreshTools} className="w-full mt-2 py-1.5 text-[10px] text-zinc-600 hover:text-zinc-400 font-mono">↻ refresh</button>
+                <button onClick={handleRefreshTools} className="w-full mt-2 py-1.5 font-mono-label text-[10px] text-[var(--muted-foreground)]/50 hover:text-[var(--muted-foreground)] transition-colors">
+                  ↻ refresh
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
-          <div className="flex items-center justify-between p-2.5 bg-white/5 rounded-lg">
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--muted)]/50">
             <div className="flex items-center gap-2.5">
               {socketStatus === "connected" ? <Wifi className="w-3.5 h-3.5 text-emerald-500" /> :
                socketStatus === "reconnecting" ? <Loader2 className="w-3.5 h-3.5 text-amber-500 animate-spin" /> :
                <WifiOff className="w-3.5 h-3.5 text-red-500" />}
-              <span className="text-xs font-mono text-zinc-400">
+              <span className="font-mono-label text-xs text-[var(--muted-foreground)]">
                 {socketStatus === "connected" ? "Online" : socketStatus === "reconnecting" ? "Reconnecting" : "Offline"}
               </span>
             </div>
-            <div className={`w-2 h-2 rounded-full ${socketStatus === "connected" ? "bg-emerald-500 animate-pulse" :
-              socketStatus === "reconnecting" ? "bg-amber-500 animate-pulse" : "bg-red-500"}`} />
+            <div className={cn(
+              "w-2 h-2 rounded-full",
+              socketStatus === "connected" ? "bg-emerald-500 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.5)]" :
+              socketStatus === "reconnecting" ? "bg-amber-500 animate-pulse" : "bg-red-500"
+            )} />
           </div>
         </div>
       </aside>
 
       {/* ── Main ── */}
       <main className="flex-1 flex flex-col relative overflow-hidden">
-        <header className="h-20 border-b border-white/5 flex items-center justify-between px-6 lg:px-8 bg-black/40 backdrop-blur-md z-10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--accent)]/3 rounded-full blur-[150px] pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-[#4D7CFF]/3 rounded-full blur-[120px] pointer-events-none" />
+
+        <header className="relative z-10 h-[72px] border-b border-[var(--border)] flex items-center justify-between px-6 lg:px-8 bg-[var(--background)]/80 backdrop-blur-md">
           <div>
-            <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Active Session</h2>
+            <p className="font-mono-label text-[10px] uppercase tracking-[0.15em] text-[var(--muted-foreground)]/60 mb-0.5">Active Session</p>
             <div className="flex items-center gap-2">
-              <p className="text-lg font-bold tracking-tight truncate max-w-[200px] lg:max-w-xs">{selectedTarget || "No Target"}</p>
-              {selectedSession && <><ChevronRight className="w-4 h-4 text-zinc-700 flex-shrink-0" /><span className="text-zinc-400 font-mono text-sm truncate max-w-[150px]">{selectedSession}</span></>}
+              <p className="font-display text-xl tracking-tight truncate max-w-[200px] lg:max-w-xs">
+                {selectedTarget || <span className="text-[var(--muted-foreground)]/40">No Target</span>}
+              </p>
+              {selectedSession && (
+                <>
+                  <ChevronRight className="w-4 h-4 text-[var(--muted-foreground)]/30 flex-shrink-0" />
+                  <span className="font-mono-label text-sm text-[var(--muted-foreground)]/60 truncate max-w-[150px]">{selectedSession}</span>
+                </>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
             {currentTarget && currentTarget.sessions.length > 0 && (
               <>
-                <select value={selectedSession || ""} onChange={e => setSelectedSession(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-md px-3 py-1.5 text-xs font-mono outline-none focus:border-cyan-500/50 transition-colors">
+                <select
+                  value={selectedSession || ""}
+                  onChange={e => setSelectedSession(e.target.value)}
+                  className="h-10 rounded-xl border border-[var(--border)] bg-transparent px-3 text-xs font-mono text-[var(--foreground)] outline-none focus:border-[var(--accent)]/50 transition-colors"
+                >
                   {currentTarget.sessions.map(s => <option key={s.name} value={s.name}>{s.name}</option>)}
                 </select>
-                <button onClick={() => selectedSession && handleSubscribe(selectedSession)}
-                  className="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold px-4 py-1.5 rounded-md text-xs transition-all shadow-lg shadow-cyan-500/20 active:scale-95">
-                  <Zap className="w-3 h-3 fill-black" /> Listen
-                </button>
+                <Button size="sm" onClick={() => selectedSession && handleSubscribe(selectedSession)}>
+                  <Zap className="w-3.5 h-3.5" /> Listen
+                </Button>
                 {selectedSession && (
-                  <button onClick={() => setConfirmDelete(`session:${selectedTarget}/${selectedSession}`)}
-                    className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-zinc-500 hover:text-red-400">
+                  <button
+                    onClick={() => setConfirmDelete(`session:${selectedTarget}/${selectedSession}`)}
+                    className="p-2 hover:bg-red-500/20 rounded-xl transition-colors text-[var(--muted-foreground)]/50 hover:text-red-400"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 )}
@@ -315,155 +401,237 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
-          {/* ── Scan Panel ── */}
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-black/60 rounded-xl border border-white/5 p-5">
-            <div className="flex items-center gap-3 mb-4">
-              <Play className="w-5 h-5 text-cyan-400" />
-              <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">New Scan</h3>
-              <span className="text-[10px] text-zinc-700 font-mono ml-auto">Enter ↵ to launch</span>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1 relative">
-                <input ref={scanInputRef} value={scanTarget} onChange={e => setScanTarget(e.target.value)} placeholder="target.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 pr-8 text-sm font-mono outline-none focus:border-cyan-500/50 transition-colors placeholder:text-zinc-700"
-                  disabled={currentScan.status === "running"} />
-                <CornerDownLeft className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-700 pointer-events-none" />
-              </div>
-              <div className="flex gap-2">
-                {["recon", "scan", "bounty"].map(m => (
-                  <button key={m} onClick={() => setScanMode(m)}
-                    className={`px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all ${
-                      scanMode === m ? modeColors[m] : "text-zinc-600 border-white/10 hover:border-white/20 hover:text-zinc-400"}`}>
-                    {m}
-                  </button>
-                ))}
-              </div>
-              <button onClick={handleStartScan} disabled={currentScan.status === "running" || !scanTarget.trim()}
-                className="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-black font-bold px-6 py-2.5 rounded-lg text-xs transition-all shadow-lg shadow-cyan-500/20 active:scale-95 whitespace-nowrap">
-                {currentScan.status === "running" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-black" />}
-                {currentScan.status === "running" ? "Running..." : "Launch"}
-              </button>
-            </div>
-            {startError && <p className="mt-3 text-xs text-red-400 font-mono flex items-center gap-1.5"><AlertCircle className="w-3.5 h-3.5" />{startError}</p>}
-          </motion.div>
-
-          {/* ── Progress ── */}
-          {currentScan.status === "running" && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="bg-black/60 rounded-xl border border-cyan-500/20 p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
-                  <span className="text-sm font-bold text-cyan-400">{currentScan.mode?.toUpperCase()} scan on {currentScan.target}</span>
+        <div className="relative z-10 flex-1 overflow-y-auto p-6 lg:p-8 flex flex-col gap-6">
+          {/* ── Scan Initiation ── */}
+          <AnimatedSection>
+            <Card featured>
+              <CardContent className="p-6 lg:p-8">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF] flex items-center justify-center shadow-[0_4px_14px_rgba(0,82,255,0.2)]">
+                    <Radio className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="font-display text-xl">New <GradientText>Scan</GradientText></h2>
+                    <p className="font-mono-label text-[11px] text-[var(--muted-foreground)]/60 mt-0.5">Press Enter to launch</p>
+                  </div>
                 </div>
-                <span className="text-[10px] text-zinc-600 font-mono">{currentScan.phase}</span>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1 relative">
+                    <input
+                      ref={scanInputRef}
+                      value={scanTarget}
+                      onChange={e => setScanTarget(e.target.value)}
+                      placeholder="target.com"
+                      className="h-12 w-full rounded-xl border border-[var(--border)] bg-[var(--background)]/50 pr-10 pl-4 text-sm font-mono text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]/30 outline-none transition-all duration-200 focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--ring)] focus:ring-offset-2 focus:ring-offset-[var(--card)] disabled:opacity-40"
+                      disabled={currentScan.status === "running"}
+                    />
+                    <CornerDownLeft className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)]/30 pointer-events-none" />
+                  </div>
+                  <div className="flex gap-2">
+                    {(Object.entries(modeConfig) as [string, typeof modeConfig['recon']][]).map(([key, cfg]) => {
+                      const Icon = cfg.icon;
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => setScanMode(key)}
+                          className={cn(
+                            "h-12 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
+                            scanMode === key
+                              ? `bg-gradient-to-r ${cfg.color} text-white shadow-sm`
+                              : "border border-[var(--border)] text-[var(--muted-foreground)]/60 hover:border-[var(--accent)]/30 hover:text-[var(--foreground)]"
+                          )}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          {cfg.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    size="lg"
+                    onClick={handleStartScan}
+                    disabled={currentScan.status === "running" || !scanTarget.trim()}
+                    className="h-12 shrink-0"
+                  >
+                    {currentScan.status === "running" ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Play className="w-4 h-4 fill-white" />
+                    )}
+                    {currentScan.status === "running" ? "Running..." : "Launch"}
+                  </Button>
+                </div>
+                {startError && (
+                  <p className="mt-3 font-mono-label text-xs text-red-400 flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5" />{startError}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </AnimatedSection>
+
+          {/* ── Current Scan Progress ── */}
+          {currentScan.status === "running" && (
+            <AnimatedSection>
+              <div className="rounded-xl border border-[var(--accent)]/20 bg-gradient-to-br from-[var(--accent)]/5 to-transparent p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF] flex items-center justify-center animate-pulse shadow-[0_4px_14px_rgba(0,82,255,0.2)]">
+                      <Activity className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-display text-base"><GradientText>{currentScan.mode?.toUpperCase()}</GradientText> scan</p>
+                      <p className="font-mono-label text-xs text-[var(--muted-foreground)]/60">{currentScan.target}</p>
+                    </div>
+                  </div>
+                  <span className="font-mono-label text-[10px] text-[var(--muted-foreground)]/50 bg-[var(--muted)]/50 px-3 py-1.5 rounded-lg">
+                    {currentScan.phase}
+                  </span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-[var(--muted)] overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full bg-gradient-to-r from-[var(--accent)] to-[#4D7CFF]"
+                    initial={{ width: "5%" }}
+                    animate={{ width: currentScan.phase === "done" ? "100%" : "60%" }}
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  />
+                </div>
+                <p className="mt-3 font-mono-label text-[11px] text-[var(--muted-foreground)]/50">
+                  Phase: {currentScan.phase || "starting..."}
+                </p>
               </div>
-              <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-                <motion.div className="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 rounded-full"
-                  initial={{ width: "5%" }} animate={{ width: currentScan.phase === "done" ? "100%" : "60%" }}
-                  transition={{ duration: 0.5 }} />
-              </div>
-              <p className="mt-2 text-[11px] text-zinc-600 font-mono">Phase: {currentScan.phase || "starting..."}</p>
-            </motion.div>
+            </AnimatedSection>
           )}
 
           {/* ── Failed Scan ── */}
           {currentScan.status === "failed" && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-red-900/20 rounded-xl border border-red-500/20 p-4 flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-bold text-red-300">Scan Failed</p>
-                <p className="text-xs font-mono text-red-400 mt-0.5">{currentScan.phase}</p>
+            <AnimatedSection>
+              <div className="rounded-xl border border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent p-5 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-500 flex items-center justify-center shadow-[0_4px_14px_rgba(220,38,38,0.25)]">
+                  <AlertCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-display text-base text-red-300">Scan <GradientText>Failed</GradientText></p>
+                  <p className="font-mono-label text-xs text-red-400/70 mt-0.5">{currentScan.phase}</p>
+                </div>
               </div>
-            </motion.div>
+            </AnimatedSection>
           )}
 
           {/* ── Scan History ── */}
           {scanHistory.length > 0 && (
             <details className="group">
-              <summary className="flex items-center gap-2 text-xs text-zinc-600 hover:text-zinc-400 cursor-pointer list-none">
+              <summary className="flex items-center gap-2 font-mono-label text-xs text-[var(--muted-foreground)]/50 hover:text-[var(--muted-foreground)] cursor-pointer list-none transition-colors">
                 <History className="w-3.5 h-3.5" /> Scan History ({scanHistory.length})
               </summary>
-              <div className="mt-2 space-y-1">
+              <div className="mt-3 space-y-1">
                 {scanHistory.slice(0, 10).map(s => (
-                  <div key={s.scan_id} className="flex items-center gap-3 text-[11px] font-mono text-zinc-600 p-2 bg-white/5 rounded-lg">
-                    <span className="text-zinc-500 w-16 flex-shrink-0">{s.started_at ? new Date(s.started_at).toLocaleTimeString() : "?"}</span>
-                    <span className={`${modeColors[s.mode || "recon"]?.split(" ")[0] || "text-zinc-400"} w-12`}>{s.mode?.toUpperCase()}</span>
-                    <span className="text-zinc-400 truncate">{s.target}</span>
-                    <span className={`ml-auto ${s.status === "completed" ? "text-emerald-500" : s.status === "failed" ? "text-red-500" : "text-amber-500"}`}>{s.status}</span>
+                  <div key={s.scan_id} className="flex items-center gap-3 font-mono-label text-[11px] text-[var(--muted-foreground)]/60 p-2.5 rounded-xl bg-[var(--muted)]/30">
+                    <span className="w-16 flex-shrink-0">{s.started_at ? new Date(s.started_at).toLocaleTimeString() : "?"}</span>
+                    <span className={cn(
+                      "w-14 uppercase",
+                      s.mode === "recon" ? "text-cyan-500" : s.mode === "scan" ? "text-amber-500" : "text-rose-500"
+                    )}>{s.mode}</span>
+                    <span className="truncate">{s.target}</span>
+                    <span className={cn(
+                      "ml-auto font-medium",
+                      s.status === "completed" ? "text-emerald-500" :
+                      s.status === "failed" ? "text-red-500" : "text-amber-500"
+                    )}>{s.status}</span>
                   </div>
                 ))}
               </div>
             </details>
           )}
 
-          {/* ── Content Area ── */}
+          {/* ── Report + Log ── */}
           {selectedTarget && selectedSession && currentTarget ? (
             (() => {
               const sessionInfo = currentTarget.sessions.find(s => s.name === selectedSession);
               return (
                 <>
                   {sessionInfo?.hasReport ? (
-                    <div className="flex-1 bg-black rounded-xl border border-white/5 overflow-hidden relative group min-h-[350px]">
-                      <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <a href={getReportUrl(selectedTarget, selectedSession)} target="_blank"
-                          className="p-2 bg-black/80 border border-white/10 rounded-md hover:bg-white/10">
-                          <Maximize2 className="w-4 h-4" />
+                    <Card className="flex-1 min-h-[350px] overflow-hidden relative group !p-0 !border-0">
+                      <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <a
+                          href={getReportUrl(selectedTarget, selectedSession)}
+                          target="_blank"
+                          className="p-2 rounded-xl bg-[var(--card)]/90 border border-[var(--border)] hover:bg-[var(--muted)] transition-colors backdrop-blur-md"
+                        >
+                          <Maximize2 className="w-4 h-4 text-[var(--muted-foreground)]" />
                         </a>
                       </div>
-                      <iframe src={getReportUrl(selectedTarget, selectedSession)} className="w-full h-full border-none" title="Scan Report" />
-                    </div>
+                      <iframe
+                        src={getReportUrl(selectedTarget, selectedSession)}
+                        className="w-full h-full border-none rounded-xl"
+                        title="Scan Report"
+                      />
+                    </Card>
                   ) : (
-                    <div className="flex-1 bg-black rounded-xl border border-white/5 flex flex-col items-center justify-center gap-3 min-h-[200px] text-zinc-600">
-                      <FileText className="w-8 h-8 opacity-30" />
-                      <p className="text-sm font-mono">No report generated for this session</p>
-                    </div>
+                    <Card className="flex-1 min-h-[200px]">
+                      <CardContent className="flex flex-col items-center justify-center h-full gap-3 py-12">
+                        <FileText className="w-10 h-10 text-[var(--muted-foreground)]/20" />
+                        <p className="font-mono-label text-sm text-[var(--muted-foreground)]/40">No report generated</p>
+                      </CardContent>
+                    </Card>
                   )}
 
                   {/* ── Terminal ── */}
-                  <div className="h-56 bg-[#0a0a0a] rounded-xl border border-white/5 flex flex-col overflow-hidden">
-                    <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between bg-black/40">
-                      <div className="flex items-center gap-2">
-                        <Terminal className="w-4 h-4 text-cyan-400" />
-                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Live Output</span>
+                  <Card>
+                    <div className="px-5 py-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--muted)]/30">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[#4D7CFF] flex items-center justify-center">
+                          <Terminal className="w-4 h-4 text-white" />
+                        </div>
+                        <span className="font-mono-label text-xs uppercase tracking-[0.1em] text-[var(--muted-foreground)]">Live Output</span>
                       </div>
-                      <div className="flex items-center gap-4 text-[10px] text-zinc-600 font-mono">
-                        <button onClick={() => setAutoScroll(!autoScroll)}
-                          className={`flex items-center gap-1.5 hover:text-white transition-colors ${autoScroll ? "" : "text-zinc-500"}`}>
+                      <div className="flex items-center gap-4 font-mono-label text-[10px] text-[var(--muted-foreground)]/50">
+                        <button
+                          onClick={() => setAutoScroll(!autoScroll)}
+                          className={cn("flex items-center gap-1.5 hover:text-[var(--muted-foreground)] transition-colors", !autoScroll && "text-[var(--muted-foreground)]/30")}
+                        >
                           {autoScroll ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
                           {autoScroll ? "Auto" : "Paused"}
                         </button>
-                        <span>Buffer: {logs.length}/500</span>
-                        <button onClick={() => setLogs([])} className="hover:text-white transition-colors">Clear</button>
+                        <span>Buf: {logs.length}/500</span>
+                        <button onClick={() => setLogs([])} className="hover:text-[var(--muted-foreground)] transition-colors">Clear</button>
                       </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-4 font-mono text-xs leading-relaxed">
-                      {logs.length > 0 ? logs.map((line, i) => (
-                        <div key={i} className="flex gap-4 mb-1 group">
-                          <span className="text-zinc-800 select-none w-8 text-right flex-shrink-0">{i + 1}</span>
-                          <p className="text-zinc-300 break-all whitespace-pre-wrap">{line}</p>
-                        </div>
-                      )) : (
-                        <div className="h-full flex flex-col items-center justify-center text-zinc-700 opacity-50">
+                    <div className="h-56 overflow-y-auto p-4 font-mono text-xs leading-relaxed bg-[var(--background)]/30">
+                      {logs.length > 0 ? (
+                        logs.map((line, i) => (
+                          <div key={i} className="flex gap-3 mb-0.5 group">
+                            <span className="text-[var(--muted-foreground)]/20 select-none w-7 text-right flex-shrink-0">{i + 1}</span>
+                            <p className="text-[var(--muted-foreground)]/80 break-all whitespace-pre-wrap">{line}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center text-[var(--muted-foreground)]/30">
                           <Terminal className="w-8 h-8 mb-2" />
-                          <p>Awaiting live connection...</p>
-                          <p className="text-[10px] mt-1">Press Listen or start a scan</p>
+                          <p className="font-mono-label text-xs">Awaiting live connection...</p>
+                          <p className="font-mono-label text-[10px] mt-1 opacity-60">Press Listen or start a scan</p>
                         </div>
                       )}
                       <div ref={logEndRef} />
                     </div>
-                  </div>
+                  </Card>
                 </>
               );
             })()
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4 text-zinc-600 min-h-[300px]">
-              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center border border-white/10 mb-2">
-                <Search className="w-10 h-10 opacity-20" />
+            <AnimatedSection delay={0.2}>
+              <div className="flex-1 flex flex-col items-center justify-center gap-5 min-h-[400px]">
+                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[var(--accent)]/10 to-[#4D7CFF]/5 border border-[var(--accent)]/20 flex items-center justify-center">
+                  <Search className="w-10 h-10 text-[var(--accent)]/40" />
+                </div>
+                <div className="text-center">
+                  <h2 className="font-display text-2xl text-[var(--muted-foreground)]/60 mb-2">No <GradientText>Data</GradientText> Available</h2>
+                  <p className="font-mono-label text-sm text-[var(--muted-foreground)]/30 max-w-xs">
+                    Enter a target above and launch a scan, or select an existing target from the sidebar.
+                  </p>
+                </div>
               </div>
-              <h3 className="text-xl font-bold">No Data Available</h3>
-              <p className="text-sm max-w-xs text-center leading-relaxed">Enter a target above and launch a scan, or select an existing target from the sidebar.</p>
-            </div>
+            </AnimatedSection>
           )}
         </div>
       </main>
@@ -471,23 +639,46 @@ export default function Dashboard() {
       {/* ── Confirm Delete Modal ── */}
       <AnimatePresence>
         {confirmDelete && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 max-w-sm w-full mx-4 shadow-2xl"
+            >
               <div className="flex items-center gap-3 mb-4">
-                <AlertCircle className="w-6 h-6 text-red-400" />
-                <h3 className="text-lg font-bold">Confirm Deletion</h3>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-500 flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="font-display text-lg">Confirm Deletion</h3>
               </div>
-              <p className="text-sm text-zinc-400 mb-6">
-                {confirmDelete.startsWith("target:") ? `Delete all sessions for "${confirmDelete.slice(7)}"? This cannot be undone.` :
-                 `Delete session "${confirmDelete.split("/")[1]}" for "${confirmDelete.split("/")[0].slice(8)}"?`}
+              <p className="font-mono-label text-sm text-[var(--muted-foreground)]/60 mb-6">
+                {confirmDelete.startsWith("target:")
+                  ? `Delete all sessions for "${confirmDelete.slice(7)}"? This cannot be undone.`
+                  : `Delete session "${confirmDelete.split("/")[1]}" for "${confirmDelete.split("/")[0].slice(8)}"?`
+                }
               </p>
               <div className="flex gap-3 justify-end">
-                <button onClick={() => setConfirmDelete(null)}
-                  className="px-4 py-2 rounded-lg text-xs font-bold border border-zinc-700 text-zinc-400 hover:bg-zinc-800 transition-colors">Cancel</button>
-                <button onClick={() => confirmDelete.startsWith("target:") ? handleDeleteTarget(confirmDelete.slice(7)) : handleDeleteSession(...confirmDelete.slice(8).split("/") as [string, string])}
-                  className="px-4 py-2 rounded-lg text-xs font-bold bg-red-600 hover:bg-red-500 text-white transition-colors">Delete</button>
+                <Button variant="secondary" size="sm" onClick={() => setConfirmDelete(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() =>
+                    confirmDelete.startsWith("target:")
+                      ? handleDeleteTarget(confirmDelete.slice(7))
+                      : handleDeleteSession(...confirmDelete.slice(8).split("/") as [string, string])
+                  }
+                >
+                  Delete
+                </Button>
               </div>
             </motion.div>
           </motion.div>
