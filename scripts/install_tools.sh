@@ -116,9 +116,35 @@ install_go_tool hakrevdns    "github.com/hakluke/hakrevdns@latest"
 install_go_tool subjs        "github.com/lc/subjs@latest"
 
 # ── Symlink Go binaries to /usr/local/bin when run as root ────────────────────
-if [[ $EUID -eq 0 ]] && [ -d "$GOPATH/bin" ]; then
-    for binary in "$GOPATH/bin/"*; do
-        [ -f "$binary" ] && ln -sf "$binary" /usr/local/bin/ 2>/dev/null || true
+if [[ $EUID -eq 0 ]]; then
+    for dir in "$GOPATH/bin" "/root/go/bin"; do
+        [ -d "$dir" ] || continue
+        for binary in "$dir/"*; do
+            [ -f "$binary" ] && ln -sf "$binary" /usr/local/bin/ 2>/dev/null || true
+        done
+    done
+    # Re-check after symlink — try go install for anything still missing
+    for tool in subfinder gau dalfox gowitness subjs waybackurls kxss hakrevdns; do
+        which "$tool" &>/dev/null && continue
+        info "Installing $tool via go install..."
+        case "$tool" in
+            subfinder)   go install "github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest" 2>/dev/null ;;
+            gau)         go install "github.com/lc/gau/v2/cmd/gau@latest" 2>/dev/null ;;
+            dalfox)      go install "github.com/hahwul/dalfox/v2@latest" 2>/dev/null ;;
+            gowitness)   go install "github.com/sensepost/gowitness@latest" 2>/dev/null ;;
+            subjs)       go install "github.com/lc/subjs@latest" 2>/dev/null ;;
+            waybackurls) go install "github.com/tomnomnom/waybackurls@latest" 2>/dev/null ;;
+            kxss)        go install "github.com/Emoe/kxss@latest" 2>/dev/null ;;
+            hakrevdns)   go install "github.com/hakluke/hakrevdns@latest" 2>/dev/null ;;
+        esac
+        # Symlink again after fresh install
+        for dir in "$GOPATH/bin" "/root/go/bin"; do
+            [ -d "$dir" ] || continue
+            for binary in "$dir/"*; do
+                [ -f "$binary" ] && ln -sf "$binary" /usr/local/bin/ 2>/dev/null || true
+            done
+        done
+        which "$tool" &>/dev/null && success "$tool installed" || error "Failed to install $tool"
     done
     success "Go binaries symlinked to /usr/local/bin/"
 fi
