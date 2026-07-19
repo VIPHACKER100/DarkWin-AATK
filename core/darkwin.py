@@ -22,7 +22,7 @@ BANNER = """
 def print_banner():
     console.print(Text(BANNER, style="bold cyan"))
     console.print(
-        "  [bold white]DARKWIN v1.1.0[/bold white] — [dim]Advanced Automation Toolkit[/dim]"
+        "  [bold white]DARKWIN v1.2.0[/bold white] — [dim]Advanced Automation Toolkit[/dim]"
     )
     console.print(
         "  [bold cyan]Developed by: ARYAN AHIRWAR (VIPHACKER.100)[/bold cyan]\n"
@@ -30,7 +30,7 @@ def print_banner():
 
 
 @click.group()
-@click.version_option("1.1.0", prog_name="DARKWIN")
+@click.version_option("1.2.0", prog_name="DARKWIN")
 def cli():
     """DARKWIN — Advanced Automation Toolkit for authorized security testing."""
     print_banner()

@@ -126,20 +126,15 @@ def create_app(reports_dir: str = None, logs_dir: str = None):
         _current_scan.update(scan_id=scan_id, target=target, mode=mode, status="running", started_at=datetime.now(timezone.utc).isoformat(), phase="initializing")
         _scan_history.insert(0, dict(_current_scan))
 
-        phases = {"recon": ["recon_pipeline"], "scan": ["recon_pipeline", "full_scan_pipeline"], "bounty": ["recon_pipeline", "full_scan_pipeline", "bug_bounty_pipeline"]}
-
         def _run():
             try:
                 from core.logger import setup_logger
                 from core.pipeline import run_pipeline
                 setup_logger(log_dir=logs_dir, tool_name="darkwin", target=target)
 
-                for phase in phases.get(mode, ["pipeline"]):
-                    if _current_scan["status"] != "running":
-                        break
-                    _current_scan["phase"] = phase
-                    socketio.emit("scan_phase", {"scan_id": scan_id, "phase": phase, "mode": mode})
-                    run_pipeline(mode, target)
+                _current_scan["phase"] = mode
+                socketio.emit("scan_phase", {"scan_id": scan_id, "phase": mode, "mode": mode})
+                run_pipeline(mode, target)
 
                 _current_scan["status"] = "completed"
                 _current_scan["phase"] = "done"

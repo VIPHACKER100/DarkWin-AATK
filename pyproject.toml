@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "darkwin"
-version = "1.1.0"
+version = "1.2.0"
 description = "Advanced Automation Toolkit for ethical hackers and bug bounty hunters"
 readme = "README.md"
 license = { text = "MIT" }

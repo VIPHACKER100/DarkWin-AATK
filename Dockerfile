@@ -22,7 +22,6 @@ COPY . .
 # ── Python environment ────────────────────────────────────────────────────────
 RUN python3 -m venv venv && \
     venv/bin/pip install --upgrade pip -q && \
-    venv/bin/pip install -r requirements.txt -q && \
     venv/bin/pip install -e . -q
 
 ENV PATH="/opt/darkwin/venv/bin:$PATH"
