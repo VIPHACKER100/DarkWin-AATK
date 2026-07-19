@@ -47,6 +47,7 @@ export default function Dashboard() {
   useEffect(() => {
     fetchData();
     socket.connect();
+    getScanHistory().then(setScanHistory).catch(() => {});
     socket.on("connect", () => setSocketStatus("connected"));
     socket.on("disconnect", () => setSocketStatus("disconnected"));
     socket.on("reconnecting", () => setSocketStatus("reconnecting"));
