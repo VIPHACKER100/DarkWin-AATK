@@ -51,8 +51,14 @@ install_pip() {
     if which "$binary" &>/dev/null; then
         success "$binary already installed"
     else
-        info "Installing $pkg via pip3..."
-        pip3 install "$pkg" &>/dev/null && success "$pkg installed" || error "Failed to install $pkg"
+    local pip_cmd="pip3"
+    if [ -n "${VIRTUAL_ENV:-}" ] && [ -f "$VIRTUAL_ENV/bin/pip" ]; then
+        pip_cmd="$VIRTUAL_ENV/bin/pip"
+    elif [[ $EUID -eq 0 ]] && [ -f "$(pwd)/venv/bin/pip" ]; then
+        pip_cmd="$(pwd)/venv/bin/pip3"
+    fi
+        info "Installing $pkg via $pip_cmd..."
+        $pip_cmd install "$pkg" &>/dev/null && success "$pkg installed" || error "Failed to install $pkg"
     fi
 }
 
@@ -87,6 +93,13 @@ install_pip arjun arjun
 install_pip metagoofil metagoofil
 
 # ── Go-based tools ────────────────────────────────────────────────────────────
+# When run as root, preserve the original user's GOPATH for correct binary location
+if [[ $EUID -eq 0 ]] && [ -n "${SUDO_USER:-}" ]; then
+    ORIG_USER_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+    export GOPATH="$ORIG_USER_HOME/go"
+    export PATH="$PATH:$GOPATH/bin"
+fi
+
 info "=== Installing Go tools ==="
 install_go_tool subfinder    "github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
 install_go_tool httpx        "github.com/projectdiscovery/httpx/cmd/httpx@latest"
@@ -101,6 +114,14 @@ install_go_tool gowitness    "github.com/sensepost/gowitness@latest"
 install_go_tool kxss         "github.com/Emoe/kxss@latest"
 install_go_tool hakrevdns    "github.com/hakluke/hakrevdns@latest"
 install_go_tool subjs        "github.com/lc/subjs@latest"
+
+# ── Symlink Go binaries to /usr/local/bin when run as root ────────────────────
+if [[ $EUID -eq 0 ]] && [ -d "$GOPATH/bin" ]; then
+    for binary in "$GOPATH/bin/"*; do
+        [ -f "$binary" ] && ln -sf "$binary" /usr/local/bin/ 2>/dev/null || true
+    done
+    success "Go binaries symlinked to /usr/local/bin/"
+fi
 
 # ── linkfinder ────────────────────────────────────────────────────────────────
 if ! which linkfinder &>/dev/null; then
