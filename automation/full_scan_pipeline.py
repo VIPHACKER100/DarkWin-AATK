@@ -3,6 +3,7 @@ DARKWIN — Automation | Full Scan Pipeline
 Comprehensive security scan pipeline: recon → network → vulnerabilities → fuzzing → report.
 """
 
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -45,9 +46,10 @@ def run(target: str) -> str:
     setup_logger(log_dir=log_dir, tool_name="full_scan_pipeline", target=target)
     log = get_logger(tool_name="full_scan_pipeline", target=target)
 
-    log.info(f"=== FULL SCAN PIPELINE START | Target: {target} | Session: {session_id} ===")
+    target = re.sub(r"^https?://", "", target).rstrip("/")
+    target_url = f"https://{target}"
 
-    target_url = f"https://{target}" if not target.startswith("http") else target
+    log.info(f"=== FULL SCAN PIPELINE START | Target: {target} | Session: {session_id} ===")
     all_urls_file = f"{output_dir}/all_urls.txt"
 
     # ── Stage 1: Recon ───────────────────────────────────────────────────────

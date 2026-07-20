@@ -3,6 +3,7 @@ DARKWIN — Automation | Bug Bounty Pipeline
 Optimised pipeline for bug bounty hunting: recon → nuclei → XSS/SQLi → screenshots → report.
 """
 
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -40,9 +41,10 @@ def run(target: str) -> str:
     setup_logger(log_dir=log_dir, tool_name="bug_bounty_pipeline", target=target)
     log = get_logger(tool_name="bug_bounty_pipeline", target=target)
 
-    log.info(f"=== BUG BOUNTY PIPELINE START | Target: {target} | Session: {session_id} ===")
+    target = re.sub(r"^https?://", "", target).rstrip("/")
+    target_url = f"https://{target}"
 
-    target_url = f"https://{target}" if not target.startswith("http") else target
+    log.info(f"=== BUG BOUNTY PIPELINE START | Target: {target} | Session: {session_id} ===")
     all_urls_file = f"{output_dir}/all_urls.txt"
     subdomains_file = f"{output_dir}/subdomains_all.txt"
     screenshots_dir = f"{output_dir}/screenshots"

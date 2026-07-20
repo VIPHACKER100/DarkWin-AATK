@@ -3,6 +3,7 @@ DARKWIN — Automation | Recon Pipeline
 Full passive and active reconnaissance pipeline for a target domain.
 """
 
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -52,6 +53,8 @@ def run(target: str, output_dir: str = None) -> str:
     Returns:
         Path to the generated HTML report.
     """
+    target = re.sub(r"^https?://", "", target).rstrip("/")
+
     config = load_config()
     if not output_dir:
         session_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -105,7 +108,7 @@ def run(target: str, output_dir: str = None) -> str:
 
     # ── Stage 8: Web Crawl ───────────────────────────────────────────────────
     log.info("[8/10] Web crawl (katana)")
-    target_url = f"https://{target}" if not target.startswith("http") else target
+    target_url = f"https://{target}"
     crawler.run(target_url, output_dir)
 
     # ── Stage 9: JS Parsing + Parameter Discovery ────────────────────────────
