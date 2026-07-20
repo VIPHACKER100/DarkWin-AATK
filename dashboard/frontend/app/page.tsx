@@ -26,7 +26,7 @@ interface Toast { id: number; type: "success" | "error" | "info"; message: strin
 
 let toastId = 0;
 
-function GradientText({ children, className }: { children: string; className?: string }) {
+function GradientText({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <span className={cn("gradient-text", className)}>
       {children}
