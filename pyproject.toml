@@ -28,3 +28,9 @@ darkwin = "core.darkwin:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["core*", "modules*", "automation*", "dashboard*"]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=9.0",
+    "pytest-cov>=4.0",
+]
