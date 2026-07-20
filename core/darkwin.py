@@ -29,10 +29,21 @@ def print_banner():
     )
 
 
-@click.group()
+@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option("1.2.0", prog_name="DARKWIN")
 def cli():
-    """DARKWIN — Advanced Automation Toolkit for authorized security testing."""
+    """DARKWIN — Advanced Automation Toolkit for ethical hackers & bug bounty hunters.
+
+    \b
+    Usage Examples:
+      darkwin run --mode recon  --target example.com
+      darkwin run --mode scan   --target example.com --confirm-scope
+      darkwin run --mode bounty --target example.com --dashboard
+      darkwin doctor
+      darkwin doctor --fix
+      darkwin update
+      darkwin dashboard
+    """
     print_banner()
 
 
@@ -48,7 +59,19 @@ def cli():
 @click.option("--confirm-scope", is_flag=True, default=False,
               help="Confirm you have authorization to test this target.")
 def run(target: str, mode: str, dashboard: bool, confirm_scope: bool):
-    """Execute a DARKWIN pipeline against the specified target."""
+    """Execute a DARKWIN pipeline against the specified target.
+
+    \b
+    Pipelines:
+      recon   — Subdomain enumeration → HTTPX → URL collection → Crawl → Nuclei
+      scan    — Full vulnerability assessment (recon + port/web/XSS scan + Nuclei)
+      bounty  — Bug-bounty pipeline with gowitness screenshots
+
+    \b
+    Flags:
+      --dashboard     Stream live logs to the web dashboard
+      --confirm-scope Acknowledge authorization (required for scan/bounty)
+    """
     from core.config_loader import load_config
     from core.logger import setup_logger
 
@@ -75,7 +98,15 @@ def run(target: str, mode: str, dashboard: bool, confirm_scope: bool):
 @cli.command()
 @click.option("--fix", is_flag=True, default=False, help="Attempt to install missing tools.")
 def doctor(fix: bool):
-    """Verify all required tools are installed and accessible on PATH."""
+    """Verify all 30+ security tools are installed and on PATH.
+
+    \b
+    Scans config.yaml and checks every tool binary:
+      subfinder, nuclei, dalfox, nmap, ffuf, sqlmap, etc.
+
+    \b
+      --fix   Auto-install missing tools (Linux/WSL, requires sudo)
+    """
     from core.config_loader import load_config
     from core.tool_loader import verify_all_tools
 
@@ -100,7 +131,11 @@ def doctor(fix: bool):
 
 @cli.command()
 def update():
-    """Pull the latest DARKWIN updates and re-verify tools."""
+    """Pull the latest DARKWIN updates from git and re-verify tools.
+
+    \b
+    Runs git pull, then re-checks all tool binaries.
+    """
     import subprocess
     console.print("[bold cyan]Updating DARKWIN repository...[/bold cyan]")
     subprocess.run(["git", "pull"], check=False)
@@ -116,7 +151,18 @@ def update():
 @cli.command()
 @click.option("--port", default=5000, help="Port for the dashboard backend.")
 def dashboard(port):
-    """Launch the DARKWIN web dashboard (Backend + Frontend info)."""
+    """Launch the DARKWIN web dashboard.
+
+    \b
+    Starts the Flask + Socket.IO backend on the specified port.
+    The frontend (Next.js) must be started separately:
+
+    \b
+      cd dashboard/frontend && npm run dev
+
+    \b
+      --port   Backend port (default: 5000)
+    """
     import webbrowser
     console.print("[bold cyan]Initializing DARKWIN Dashboard...[/bold cyan]")
     
