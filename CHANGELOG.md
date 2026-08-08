@@ -4,6 +4,50 @@ All notable changes to DARKWIN are documented in this file.
 
 ---
 
+## [1.3.0] — 2026-08-09
+
+### Target Handling (CLI, Core, Dashboard)
+
+- **New `core/target.py`** — `normalize_target()` strips scheme/path/port/trailing dot and
+  handles double-scheme inputs; `validate_target()` rejects anything that isn't a sane
+  hostname/IP; `safe_target()` guarantees a filesystem-safe slug.
+- **New `core/console_progress.py`** — shared live rich 0–100% progress bar for CLI scans
+  (falls back to one clean `[NN%] <phase>` line when stdout is piped/CI).
+- `core/config_loader.get_output_dir()` — defensive `safe_target()` so malformed targets
+  (`https://…`) no longer create broken nested directories.
+- CLI `darkwin run` — validates + normalizes targets, rejects invalid input before launch.
+- Pipelines (`recon`/`scan`/`bounty`) — protocol prefix (`https?://`) stripped before every
+  stage so both `target` and `target_url` are always correct.
+- Dashboard `/scan` — normalizes target, returns 400 for unusable input; `/targets` now
+  filters out ghost folders created from malformed targets.
+
+### Dashboard
+
+- **Removed framer-motion** — replaced with pure CSS animations (`@keyframes fade-up`,
+  `slide-in`, `float`, `scale-in`) in `globals.css`.
+- `lib/api.ts` — switched from axios to native `fetch` (smaller bundle, fewer deps).
+- Removed unused module-level `__init__.py` files across `modules/`.
+
+### Modules
+
+- **`modules/recon/asn_lookup.py` rewritten** — primary: HackerTarget API → clean
+  `IP,ASN,Owner` CSV; fallback: parsed `origin:`/`descr:` from `whois -h whois.radb.net`.
+  No more raw HTML / 404 pages in `asn.txt`.
+- **`modules/osint/metadata_scraper.py`** — Python 2 aware (prefers `python2
+  /opt/metagoogoo.metagoofil/metagoofil.py`), graceful when the tool is missing.
+- **`modules/osint/social_media_enum.py`**, **`modules/cloud/cloud_enum.py`** — skip
+  gracefully when the binary is missing instead of `/bin/sh: … not found` noise.
+
+### Installer & Tests
+
+- `scripts/install_tools.sh` — `install_pip()` symlinks pip-installed binaries into
+  `/usr/local/bin`; `install_metagoofil()` installs python2 + a py2-first wrapper;
+  `install_cloud_enum()` installs from the repo `pyproject.toml`.
+- New tests: `tests/unit/test_target.py`, `tests/unit/test_console_progress.py`;
+  updated ASN/metagoofil/sherlock/cloud_enum tests.
+
+---
+
 ## [1.2.0] — 2026-07-19
 
 ### Dashboard — Design System Overhaul

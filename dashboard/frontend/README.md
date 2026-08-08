@@ -47,7 +47,7 @@ dashboard/frontend/
 │   ├── animated-section.tsx  — AnimatedSection, StaggerContainer, StaggerItem
 │   └── section-label.tsx     — Badge with pulse dot + monospace label
 ├── lib/
-│   ├── api.ts           — Axios REST client (targets, scan, tools, delete)
+│   ├── api.ts           — fetch-based REST client (targets, scan, tools, delete)
 │   ├── socket.ts        — Socket.IO client with reconnection
 │   └── utils.ts         — cn() classname helper
 └── public/              — Static assets

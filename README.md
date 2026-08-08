@@ -52,6 +52,7 @@ Configure API keys in `core/config.yaml`.
 | **Tool Runner** | Shared `run_tool()` — one pattern for all 25+ modules |
 | **Reporting** | Auto-generated HTML reports |
 | **Concurrency** | Parallel stage execution via ThreadPool |
+| **Target Handling** | Normalized + validated targets; protocol prefix stripped before every pipeline stage |
 
 ---
 
@@ -103,7 +104,7 @@ cd dashboard/frontend && npm run dev   # frontend on :3000
 **Frontend design system:**
 - Fonts: Calistoga (display), Inter (UI), JetBrains Mono (labels)
 - Gradient accent: `#0052FF → #4D7CFF` on CTAs, icons, progress bars
-- Animated entrance transitions (Framer Motion)
+- Animated entrance transitions (pure CSS `@keyframes` — no Framer Motion)
 - Dark theme with dot-pattern textures and radial glows
 
 ---
