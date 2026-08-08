@@ -159,11 +159,34 @@ install_pip() {
     else
         error "Failed to install $pkg"
         FAILED_TOOLS+=("$binary")
+        return 1
     fi
+    # Pip-installed tools commonly land in a venv /usr/local/sbin that isn't
+    # on every shell's PATH (e.g. venv/bin/sherlock). Symlink them into
+    # /usr/local/bin so the DARKWIN shell commands always resolve them.
+    if [[ $EUID -eq 0 ]]; then
+        local src
+        for cand in "$(command -v "$binary" 2>/dev/null)" \
+                    "$VIRTUAL_ENV/bin/$binary" \
+                    "/usr/local/bin/$binary" \
+                    "$(pwd)/venv/bin/$binary"; do
+            if [ -n "$cand" ] && [ -f "$cand" ]; then
+                src="$cand"
+                break
+            fi
+        done
+        if [ -n "${src:-}" ] && [ "$src" != "/usr/local/bin/$binary" ]; then
+            ln -sf "$src" "/usr/local/bin/$binary"
+            success "Symlinked $binary → /usr/local/bin"
+        fi
+    fi
+    _check "$binary" || { error "$binary still not found on PATH"; FAILED_TOOLS+=("$binary"); }
 }
 
-# metagoofil has no reliable PyPI package that ships a working binary —
-# it must come from GitHub, same pattern as linkfinder/cloud_enum below.
+# metagoofil 2.2 is Python 2 only and has no PyPI / requirements.txt — the
+# upstream repo ships its deps as bundled directories. Install python2 (best
+# effort) and generate a wrapper that runs the script under python2 when it is
+# available, so we never hit the infamous py3 SyntaxError.
 install_metagoofil() {
     if _check metagoofil; then
         success "metagoofil already installed"
@@ -173,16 +196,28 @@ install_metagoofil() {
     if [ ! -d /opt/metagoofil ]; then
         _run_logged "clone metagoofil" git clone https://github.com/laramies/metagoofil.git /opt/metagoofil
     fi
-    _run_logged "metagoofil requirements" pip3 install -r /opt/metagoofil/requirements.txt --break-system-packages
+    # Best-effort python2 (Kali/Debian: 'python2'; older: 'python2.7').
+    if ! _check python2; then
+        _run_logged "apt install python2" apt-get install -y python2 \
+            || _run_logged "apt install python2.7" apt-get install -y python2.7
+    fi
     cat > /usr/local/bin/metagoofil <<'EOF'
 #!/usr/bin/env bash
-exec python3 /opt/metagoofil/metagoofil.py "$@"
+if command -v python2 >/dev/null 2>&1; then
+    exec python2 /opt/metagoofil/metagoofil.py "$@"
+elif command -v python2.7 >/dev/null 2>&1; then
+    exec python2.7 /opt/metagoofil/metagoofil.py "$@"
+else
+    echo "metagoofil requires python2 — install it: sudo apt install python2" >&2
+    exit 127
+fi
 EOF
     chmod +x /usr/local/bin/metagoofil
     if _check metagoofil; then
         success "metagoofil installed"
     else
-        error "Failed to install metagoofil — see install_tools.log"
+        warning="metagoofil binary present but python2 missing"
+        error "$warning"
         FAILED_TOOLS+=("metagoofil")
     fi
 }
@@ -212,9 +247,15 @@ install_cloud_enum() {
     fi
     info "Installing cloud_enum..."
     [ -d /opt/cloud_enum ] || _run_logged "clone cloud_enum" git clone https://github.com/initstring/cloud_enum.git /opt/cloud_enum
-    _run_logged "cloud_enum requirements" pip3 install -r /opt/cloud_enum/requirements.txt --break-system-packages
-    ln -sf /opt/cloud_enum/cloud_enum.py /usr/local/bin/cloud_enum
-    chmod +x /usr/local/bin/cloud_enum
+    # cloud_enum ships a pyproject.toml (no requirements.txt). Installing the
+    # project puts the bundled `enum_tools` package + its deps onto site-packages,
+    # which stops the "Please pip install requirements.txt" error at runtime.
+    _run_logged "cloud_enum pip install" pip3 install /opt/cloud_enum --break-system-packages -q
+    _run_logged "cloud_enum python selector" command -v cloud_enum || true
+    if ! _check cloud_enum; then
+        ln -sf /opt/cloud_enum/cloud_enum.py /usr/local/bin/cloud_enum
+        chmod +x /usr/local/bin/cloud_enum
+    fi
     if _check cloud_enum; then
         success "cloud_enum installed"
     else

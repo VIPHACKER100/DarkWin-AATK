@@ -21,7 +21,7 @@ import { AnimatedSection, StaggerContainer, StaggerItem } from "@/components/ani
 
 interface SessionInfo { name: string; hasReport: boolean; modified: string; }
 interface TargetData { target: string; sessions: SessionInfo[]; }
-interface ScanProgress { scan_id: string | null; target: string | null; mode: string | null; status: string; phase: string | null; started_at: string | null; }
+interface ScanProgress { scan_id: string | null; target: string | null; mode: string | null; status: string; phase: string | null; started_at: string | null; progress: number; }
 interface Toast { id: number; type: "success" | "error" | "info"; message: string; }
 
 let toastId = 0;
@@ -47,7 +47,7 @@ export default function Dashboard() {
   const [showTools, setShowTools] = useState(false);
   const [scanTarget, setScanTarget] = useState("");
   const [scanMode, setScanMode] = useState("recon");
-  const [currentScan, setCurrentScan] = useState<ScanProgress>({ scan_id: null, target: null, mode: null, status: "idle", phase: null, started_at: null });
+  const [currentScan, setCurrentScan] = useState<ScanProgress>({ scan_id: null, target: null, mode: null, status: "idle", phase: null, started_at: null, progress: 0 });
   const [scanHistory, setScanHistory] = useState<ScanProgress[]>([]);
   const [startError, setStartError] = useState("");
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -90,8 +90,15 @@ export default function Dashboard() {
     socket.on("scan_phase", (data: { phase: string }) => {
       setCurrentScan(prev => ({ ...prev, phase: data.phase }));
     });
+    socket.on("scan_progress", (data: { progress: number; phase: string | null }) => {
+      setCurrentScan(prev => ({
+        ...prev,
+        progress: typeof data.progress === "number" ? data.progress : prev.progress,
+        phase: data.phase ?? prev.phase,
+      }));
+    });
     socket.on("scan_done", () => {
-      setCurrentScan(prev => ({ ...prev, status: "completed", phase: "done" }));
+      setCurrentScan(prev => ({ ...prev, status: "completed", phase: "done", progress: 100 }));
       addToast("success", "Scan completed");
       fetchData();
     });
@@ -130,7 +137,7 @@ export default function Dashboard() {
     setLogs([]);
     try {
       const result = await startScan(scanTarget.trim(), scanMode);
-      setCurrentScan({ scan_id: result.scan_id, target: result.target, mode: result.mode, status: "running", phase: "queued", started_at: new Date().toISOString() });
+      setCurrentScan({ scan_id: result.scan_id, target: result.target, mode: result.mode, status: "running", phase: "queued", started_at: new Date().toISOString(), progress: 0 });
       socket.emit("subscribe", { scan_id: result.scan_id });
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } }, message?: string };
@@ -490,20 +497,31 @@ export default function Dashboard() {
                         <p className="font-mono-label text-xs text-[var(--background)]/50">{currentScan.target}</p>
                       </div>
                     </div>
-                    <span className="font-mono-label text-[10px] text-[var(--background)]/40 bg-[var(--background)]/5 px-3 py-1.5 rounded-lg border border-[var(--background)]/10">
-                      {currentScan.phase}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <motion.span
+                        key={Math.round(currentScan.progress)}
+                        className="font-display text-2xl text-[var(--background)] tabular-nums"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {Math.round(currentScan.progress)}%
+                      </motion.span>
+                      <span className="font-mono-label text-[10px] text-[var(--background)]/40 bg-[var(--background)]/5 px-3 py-1.5 rounded-lg border border-[var(--background)]/10 truncate max-w-[180px]">
+                        {currentScan.phase}
+                      </span>
+                    </div>
                   </div>
                   <div className="w-full h-2 rounded-full bg-[var(--background)]/10 overflow-hidden">
                     <motion.div
                       className="h-full rounded-full bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)]"
-                      initial={{ width: "5%" }}
-                      animate={{ width: currentScan.phase === "done" ? "100%" : "60%" }}
-                      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                      initial={{ width: "0%" }}
+                      animate={{ width: `${Math.round(currentScan.progress)}%` }}
+                      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                     />
                   </div>
                   <p className="mt-3 font-mono-label text-[11px] text-[var(--background)]/40">
-                    Phase: {currentScan.phase || "starting..."}
+                    Phase: {currentScan.phase || "starting..."} · {Math.round(currentScan.progress)}% complete
                   </p>
                 </div>
               </div>

@@ -74,6 +74,15 @@ def run(target: str, mode: str, dashboard: bool, confirm_scope: bool):
     """
     from core.config_loader import load_config
     from core.logger import setup_logger
+    from core.target import safe_target
+
+    target = safe_target(target)
+    if not target:
+        console.print(
+            "[bold red]Invalid target:[/bold red] provide a valid hostname or IP "
+            "(no scheme, path, or port)."
+        )
+        sys.exit(1)
 
     config = load_config()
     log_dir = config.get("log_dir", "logs")
@@ -91,8 +100,11 @@ def run(target: str, mode: str, dashboard: bool, confirm_scope: bool):
     if dashboard:
         _start_dashboard()
 
-    from core.pipeline import run_pipeline
-    run_pipeline(mode, target)
+    from core.console_progress import cli_progress
+
+    with cli_progress(f"Scanning {target} ({mode})"):
+        from core.pipeline import run_pipeline
+        run_pipeline(mode, target)
 
 
 @cli.command()

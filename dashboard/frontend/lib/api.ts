@@ -29,12 +29,12 @@ export const startScan = async (target: string, mode: string) => {
 
 export const getCurrentScan = async () => {
   const { data } = await api.get('/scan/current');
-  return data as { scan_id: string | null; target: string | null; mode: string | null; status: string; phase: string | null; started_at: string | null };
+  return data as { scan_id: string | null; target: string | null; mode: string | null; status: string; phase: string | null; started_at: string | null; progress: number };
 };
 
 export const getScanHistory = async () => {
   const { data } = await api.get('/scan/history');
-  return data as { scan_id: string; target: string; mode: string; status: string; phase: string | null; started_at: string | null }[];
+  return data as { scan_id: string; target: string; mode: string; status: string; phase: string | null; started_at: string | null; progress: number }[];
 };
 
 export const deleteTarget = async (target: string) => {

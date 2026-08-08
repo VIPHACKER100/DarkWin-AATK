@@ -57,6 +57,12 @@ def get_output_dir(config: dict, target: str, session_id: str) -> str:
         Absolute path string to the output directory.
     """
     base = config.get("output_dir", "reports")
-    output_dir = Path(base) / target / session_id
+
+    # Defensive: never let user-supplied target create nested / malformed
+    # directories such as "reports/https:/example.com/...".
+    from core.target import safe_target
+    clean_target = safe_target(target) or "_invalid_target"
+
+    output_dir = Path(base) / clean_target / session_id
     output_dir.mkdir(parents=True, exist_ok=True)
     return str(output_dir)

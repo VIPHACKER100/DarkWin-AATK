@@ -63,15 +63,30 @@ def test_whois_lookup_run(mock_run_tool, tmp_path):
 
 # ─── ASN Lookup ───────────────────────────────────────────────────────────
 
-@patch("modules.recon.asn_lookup.run_tool")
-def test_asn_lookup_run_calls_two_tools(mock_run_tool, tmp_path):
+@patch("modules.recon.asn_lookup._api_aslookup", return_value=[("1.2.3.4", "AS152510", "Owner Corp")])
+@patch("modules.recon.asn_lookup._radb_aslookup")
+def test_asn_lookup_writes_clean_output(mock_radb, mock_api, tmp_path):
     from modules.recon.asn_lookup import run
     run("example.com", str(tmp_path))
 
-    assert mock_run_tool.call_count == 2
-    calls = [c[0][0] for c in mock_run_tool.call_args_list]
-    assert any("whois" in c for c in calls)
-    assert any("bgp.he.net" in c for c in calls)
+    out_file = tmp_path / "asn.txt"
+    assert out_file.exists()
+    content = out_file.read_text()
+    assert "# ASN Lookup" in content
+    assert "1.2.3.4,AS152510,Owner Corp" in content
+    mock_radb.assert_not_called()
+
+
+@patch("modules.recon.asn_lookup._api_aslookup", return_value=[])
+@patch("modules.recon.asn_lookup._radb_aslookup", return_value=[("example.com", "AS51234", "")])
+def test_asn_lookup_falls_back_to_radb(mock_radb, mock_api, tmp_path):
+    from modules.recon.asn_lookup import run
+    run("example.com", str(tmp_path))
+
+    out_file = tmp_path / "asn.txt"
+    content = out_file.read_text()
+    assert "example.com,AS51234," in content
+    mock_radb.assert_called_once()
 
 
 # ─── Reverse IP ───────────────────────────────────────────────────────────

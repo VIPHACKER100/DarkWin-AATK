@@ -17,8 +17,9 @@ def test_email_harvester_run(mock_run_tool, tmp_path):
     assert "example.com" in cmd
 
 
+@patch("modules.osint.social_media_enum.shutil.which", return_value="/usr/local/bin/sherlock")
 @patch("modules.osint.social_media_enum.run_tool")
-def test_social_media_enum_run(mock_run_tool, tmp_path):
+def test_social_media_enum_run(mock_run_tool, mock_which, tmp_path):
     from modules.osint.social_media_enum import run
     run("testuser", str(tmp_path))
 
@@ -27,8 +28,20 @@ def test_social_media_enum_run(mock_run_tool, tmp_path):
     assert "testuser" in cmd
 
 
+@patch("modules.osint.social_media_enum.shutil.which", return_value=None)
+@patch("modules.osint.social_media_enum.run_tool")
+def test_social_media_enum_missing_binary_skips(mock_run_tool, mock_which, tmp_path):
+    from modules.osint.social_media_enum import run
+    run("testuser", str(tmp_path))
+
+    mock_run_tool.assert_not_called()
+    out_file = tmp_path / "social.txt"
+    assert out_file.exists()
+
+
+@patch("modules.osint.metadata_scraper.shutil.which", side_effect=lambda name: "/opt/metagoofil/metagoofil.py" if name == "metagoofil" else None)
 @patch("modules.osint.metadata_scraper.run_tool")
-def test_metadata_scraper_run(mock_run_tool, tmp_path):
+def test_metadata_scraper_run(mock_run_tool, mock_which, tmp_path):
     from modules.osint.metadata_scraper import run
     run("example.com", str(tmp_path))
 

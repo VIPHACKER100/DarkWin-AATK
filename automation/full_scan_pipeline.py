@@ -8,6 +8,7 @@ from pathlib import Path
 
 from core.config_loader import load_config, get_output_dir
 from core.logger import setup_logger, get_logger
+from core import progress as progress_hub
 from modules.network import port_scanner, service_enum, smb_enum, ftp_enum, ssh_enum
 from modules.vulnerabilities.xss import reflected_xss, dom_xss
 from modules.vulnerabilities.sqli import sqli_detector, blind_sqli
@@ -45,47 +46,70 @@ def run(target: str) -> str:
     setup_logger(log_dir=log_dir, tool_name="full_scan_pipeline", target=target)
     log = get_logger(tool_name="full_scan_pipeline", target=target)
 
+    progress_hub.reset()
+
     log.info(f"=== FULL SCAN PIPELINE START | Target: {target} | Session: {session_id} ===")
 
     target_url = f"https://{target}" if not target.startswith("http") else target
     all_urls_file = f"{output_dir}/all_urls.txt"
 
-    # ── Stage 1: Recon ───────────────────────────────────────────────────────
-    log.info("[1/5] Running recon pipeline")
-    recon_pipeline.run(target, output_dir=output_dir)
+    # ── Stage 1: Recon (40%) ───────────────────────────────────────────────
+    progress_hub.stage("[1/5] Running recon pipeline", 0, log.info)
+    recon_pipeline.run(target, output_dir=output_dir, stage_weight=4.0, reset_progress=False)
 
-    # ── Stage 2: Network Scanning ────────────────────────────────────────────
-    log.info("[2/5] Network scanning")
-    port_scanner.run(target, output_dir)
-    service_enum.run(target, output_dir)
-    smb_enum.run(target, output_dir)
-    ftp_enum.run(target, output_dir)
-    ssh_enum.run(target, output_dir)
+    # ── Stage 2: Network Scanning (20%) ─────────────────────────────────────
+    progress_hub.stage("[2/5] Network scanning", 0, log.info)
+    for name, fn in (
+        ("nmap port scan", port_scanner.run),
+        ("service enumeration", service_enum.run),
+        ("SMB enumeration", smb_enum.run),
+        ("FTP enumeration", ftp_enum.run),
+        ("SSH enumeration", ssh_enum.run),
+    ):
+        progress_hub.advance(4.0, f"[2/5] {name}")
+        fn(target, output_dir)
 
-    # ── Stage 3: Vulnerability Scanning ─────────────────────────────────────
-    log.info("[3/5] Vulnerability scanning")
+    # ── Stage 3: Vulnerability Scanning (18%) ────────────────────────────────
+    progress_hub.stage("[3/5] Vulnerability scanning", 0, log.info)
     if Path(all_urls_file).exists():
+        progress_hub.advance(2.0, "[3/5] reflected XSS")
         reflected_xss.run(all_urls_file, output_dir)
+        progress_hub.advance(2.0, "[3/5] DOM XSS")
         dom_xss.run(all_urls_file, output_dir)
-    sqli_detector.run(target_url, output_dir)
-    blind_sqli.run(target_url, output_dir)
-    lfi_scanner.run(f"{target_url}/?page=FUZZ", output_dir)
-    ssrf_tester.run(f"{target_url}/?url=FUZZ", output_dir)
-    rce_scanner.run(target_url, output_dir)
-    csrf_detector.run(target_url, output_dir)
-    idor_scanner.run(f"{target_url}/?id=FUZZ", output_dir)
+    for name, fn in (
+        ("SQL injection", sqli_detector.run),
+        ("blind SQLi", blind_sqli.run),
+        ("LFI scanner", lfi_scanner.run),
+        ("SSRF tester", ssrf_tester.run),
+        ("RCE scanner", rce_scanner.run),
+        ("CSRF detector", csrf_detector.run),
+        ("IDOR scanner", idor_scanner.run),
+    ):
+        progress_hub.advance(2.0, f"[3/5] {name}")
+        if name == "LFI scanner":
+            fn(f"{target_url}/?page=FUZZ", output_dir)
+        elif name == "SSRF tester":
+            fn(f"{target_url}/?url=FUZZ", output_dir)
+        elif name == "IDOR scanner":
+            fn(f"{target_url}/?id=FUZZ", output_dir)
+        else:
+            fn(target_url, output_dir)
 
-    # ── Stage 4: Fuzzing ─────────────────────────────────────────────────────
-    log.info("[4/5] Fuzzing")
+    # ── Stage 4: Fuzzing (12%) ───────────────────────────────────────────────
+    progress_hub.stage("[4/5] Fuzzing", 0, log.info)
+    progress_hub.advance(4.0, "[4/5] directory fuzzing")
     directory_fuzzer.run(target, output_dir)
+    progress_hub.advance(4.0, "[4/5] API fuzzing")
     api_fuzzer.run(target, output_dir)
     if Path(all_urls_file).exists():
+        progress_hub.advance(4.0, "[4/5] parameter fuzzing")
         parameter_fuzzer.run(target_url, output_dir)
 
     # ── Stage 5: Report ───────────────────────────────────────────────────────
-    log.info("[5/5] Generating reports")
+    progress_hub.stage("[5/5] Generating reports", 10, log.info)
     results = report_builder.collect_results(output_dir)
     report_path = html_report.generate(results, output_dir)
 
+    progress_hub.set_pct(100, "done")
     log.success(f"=== FULL SCAN PIPELINE COMPLETE | Report: {report_path} ===")
     return report_path
