@@ -67,6 +67,17 @@ All notable changes to DARKWIN are documented in this file.
 - `scripts/install_tools.sh`: complete rewrite with `--only`, `--missing` flags, 3-attempt retry with GOPROXY fallback, per-tool failure reporting, `setup_go_env()` with `go env -w`, `chown` back to SUDO_USER, `--break-system-packages` flag
 - Always symlinks Go binaries to `/usr/local/bin/` regardless of "already installed" state
 
+### CLI & Documentation
+
+- Detailed help text on all CLI commands (`run`/`doctor`/`update`/`dashboard`) with pipeline descriptions and usage examples
+- `-h` shorthand for help in addition to `--help`
+
+### CI & Build
+
+- Added `[test]` optional dependencies (`pytest`, `pytest-cov`) to `pyproject.toml`
+- CI workflow now installs `.[test]` instead of bare package
+- Fixed TypeScript build error: `GradientText` `children` type changed from `string` to `React.ReactNode`
+
 ---
 
 ## [1.1.0] — 2026-07-19

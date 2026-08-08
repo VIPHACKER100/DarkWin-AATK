@@ -223,9 +223,5 @@ def _start_dashboard(port=5000):
         sys.exit(1)
 
 
-def main():
-    cli()
-
-
 if __name__ == "__main__":
-    main()
+    cli()

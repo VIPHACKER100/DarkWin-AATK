@@ -3,6 +3,7 @@ DARKWIN — Automation | Recon Pipeline
 Full passive and active reconnaissance pipeline for a target domain.
 """
 
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -59,6 +60,8 @@ def run(target: str, output_dir: str = None, stage_weight: float = 10.0,
     Returns:
         Path to the generated HTML report.
     """
+    target = re.sub(r"^https?://", "", target).rstrip("/")
+
     config = load_config()
     if not output_dir:
         session_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

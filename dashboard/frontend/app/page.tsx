@@ -8,7 +8,6 @@ import {
   ChevronDown, History, Layers, Trash2, Eye, EyeOff, CornerDownLeft,
   Radio, Globe, Server, Cpu
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   getTargets, getReportUrl, getToolStatus, startScan,
   getCurrentScan, getScanHistory, deleteTarget, deleteSession
@@ -195,28 +194,22 @@ export default function Dashboard() {
     <div className="flex h-screen w-full bg-[var(--background)] text-[var(--foreground)] selection:bg-[var(--accent)]/30">
       {/* ── Toasts ── */}
       <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm">
-        <AnimatePresence>
-          {toasts.map(t => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 100 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className={cn(
-                "px-5 py-3 rounded-xl shadow-lg border text-sm font-medium flex items-center gap-3 backdrop-blur-md",
-                t.type === "success" && "bg-emerald-900/80 border-emerald-700/50 text-emerald-200",
-                t.type === "error" && "bg-red-900/80 border-red-700/50 text-red-200",
-                t.type === "info" && "bg-zinc-800/80 border-zinc-700/50 text-zinc-200"
-              )}
-            >
-              {t.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> :
-               t.type === "error" ? <AlertCircle className="w-4 h-4 text-red-400" /> :
-               <Activity className="w-4 h-4 text-zinc-400" />}
-              {t.message}
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        {toasts.map(t => (
+          <div
+            key={t.id}
+            className={cn(
+              "px-5 py-3 rounded-xl shadow-lg border text-sm font-medium flex items-center gap-3 backdrop-blur-md animate-slide-in",
+              t.type === "success" && "bg-emerald-900/80 border-emerald-700/50 text-emerald-200",
+              t.type === "error" && "bg-red-900/80 border-red-700/50 text-red-200",
+              t.type === "info" && "bg-zinc-800/80 border-zinc-700/50 text-zinc-200"
+            )}
+          >
+            {t.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> :
+             t.type === "error" ? <AlertCircle className="w-4 h-4 text-red-400" /> :
+             <Activity className="w-4 h-4 text-zinc-400" />}
+            {t.message}
+          </div>
+        ))}
       </div>
 
       {/* ── Sidebar ── */}
@@ -322,28 +315,21 @@ export default function Dashboard() {
               </div>
             )}
           </button>
-          <AnimatePresence>
-            {showTools && toolStatus && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="max-h-40 overflow-y-auto space-y-0.5 pl-2 pr-1">
-                  {Object.entries(toolStatus).map(([name, ok]) => (
-                    <div key={name} className="flex items-center justify-between py-1">
-                      <span className="font-mono-label text-[11px] text-[var(--muted-foreground)]/60 truncate">{name}</span>
-                      {ok ? <CheckCircle2 className="w-3 h-3 text-emerald-500/70 flex-shrink-0" /> : <XCircle className="w-3 h-3 text-red-500/70 flex-shrink-0" />}
-                    </div>
-                  ))}
-                </div>
-                <button onClick={handleRefreshTools} className="w-full mt-2 py-1.5 font-mono-label text-[10px] text-[var(--muted-foreground)]/50 hover:text-[var(--muted-foreground)] transition-colors">
-                  ↻ refresh
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {showTools && toolStatus && (
+            <div className="overflow-hidden animate-fade-up">
+              <div className="max-h-40 overflow-y-auto space-y-0.5 pl-2 pr-1">
+                {Object.entries(toolStatus).map(([name, ok]) => (
+                  <div key={name} className="flex items-center justify-between py-1">
+                    <span className="font-mono-label text-[11px] text-[var(--muted-foreground)]/60 truncate">{name}</span>
+                    {ok ? <CheckCircle2 className="w-3 h-3 text-emerald-500/70 flex-shrink-0" /> : <XCircle className="w-3 h-3 text-red-500/70 flex-shrink-0" />}
+                  </div>
+                ))}
+              </div>
+              <button onClick={handleRefreshTools} className="w-full mt-2 py-1.5 font-mono-label text-[10px] text-[var(--muted-foreground)]/50 hover:text-[var(--muted-foreground)] transition-colors">
+                ↻ refresh
+              </button>
+            </div>
+          )}
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--muted)]/50">
             <div className="flex items-center gap-2.5">
               {socketStatus === "connected" ? <Wifi className="w-3.5 h-3.5 text-emerald-500" /> :
@@ -485,13 +471,9 @@ export default function Dashboard() {
                 <div className="relative z-10 p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <motion.div
-                        className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-secondary)] flex items-center justify-center shadow-[var(--shadow-accent)]"
-                        animate={{ y: [0, -3, 0] }}
-                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                      >
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-secondary)] flex items-center justify-center shadow-[var(--shadow-accent)] animate-float">
                         <Activity className="w-5 h-5 text-white" />
-                      </motion.div>
+                      </div>
                       <div>
                         <p className="font-display text-base text-[var(--background)]"><GradientText>{currentScan.mode?.toUpperCase()}</GradientText> scan</p>
                         <p className="font-mono-label text-xs text-[var(--background)]/50">{currentScan.target}</p>
@@ -516,7 +498,7 @@ export default function Dashboard() {
                     <motion.div
                       className="h-full rounded-full bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)]"
                       initial={{ width: "0%" }}
-                      animate={{ width: `${Math.round(currentScan.progress)}%` }}
+                      animate={{ width: currentScan.phase === "done" ? "100%" : `${Math.round(currentScan.progress)}%` }}
                       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                     />
                   </div>
@@ -647,13 +629,9 @@ export default function Dashboard() {
           ) : (
             <AnimatedSection delay={0.2}>
               <div className="flex-1 flex flex-col items-center justify-center gap-5 min-h-[400px]">
-                <motion.div
-                  className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[var(--accent)]/10 to-[var(--accent-secondary)]/5 border border-[var(--accent)]/20 flex items-center justify-center"
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                >
+                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[var(--accent)]/10 to-[var(--accent-secondary)]/5 border border-[var(--accent)]/20 flex items-center justify-center animate-float">
                   <Search className="w-10 h-10 text-[var(--accent)]/40" />
-                </motion.div>
+                </div>
                 <div className="text-center">
                   <h2 className="font-display text-2xl text-[var(--muted-foreground)]/60 mb-2">No <GradientText>Data</GradientText> Available</h2>
                   <p className="font-mono-label text-sm text-[var(--muted-foreground)]/30 max-w-xs">
@@ -667,53 +645,40 @@ export default function Dashboard() {
       </main>
 
       {/* ── Confirm Delete Modal ── */}
-      <AnimatePresence>
-        {confirmDelete && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 max-w-sm w-full mx-4 shadow-2xl"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-500 flex items-center justify-center">
-                  <AlertCircle className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="font-display text-lg">Confirm Deletion</h3>
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-up">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 max-w-sm w-full mx-4 shadow-2xl animate-scale-in">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-500 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-white" />
               </div>
-              <p className="font-mono-label text-sm text-[var(--muted-foreground)]/60 mb-6">
-                {confirmDelete.startsWith("target:")
-                  ? `Delete all sessions for "${confirmDelete.slice(7)}"? This cannot be undone.`
-                  : `Delete session "${confirmDelete.split("/")[1]}" for "${confirmDelete.split("/")[0].slice(8)}"?`
+              <h3 className="font-display text-lg">Confirm Deletion</h3>
+            </div>
+            <p className="font-mono-label text-sm text-[var(--muted-foreground)]/60 mb-6">
+              {confirmDelete.startsWith("target:")
+                ? `Delete all sessions for "${confirmDelete.slice(7)}"? This cannot be undone.`
+                : `Delete session "${confirmDelete.split("/")[1]}" for "${confirmDelete.split("/")[0].slice(8)}"?`
+              }
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button variant="secondary" size="sm" onClick={() => setConfirmDelete(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() =>
+                  confirmDelete.startsWith("target:")
+                    ? handleDeleteTarget(confirmDelete.slice(7))
+                    : handleDeleteSession(...confirmDelete.slice(8).split("/") as [string, string])
                 }
-              </p>
-              <div className="flex gap-3 justify-end">
-                <Button variant="secondary" size="sm" onClick={() => setConfirmDelete(null)}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() =>
-                    confirmDelete.startsWith("target:")
-                      ? handleDeleteTarget(confirmDelete.slice(7))
-                      : handleDeleteSession(...confirmDelete.slice(8).split("/") as [string, string])
-                  }
-                >
-                  Delete
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -66,9 +66,3 @@ def verify_all_tools(config: dict) -> dict:
         console.print("\n[bold green]✓ All tools verified successfully![/bold green]\n")
 
     return results
-
-
-if __name__ == "__main__":
-    from config_loader import load_config
-    cfg = load_config()
-    verify_all_tools(cfg)
