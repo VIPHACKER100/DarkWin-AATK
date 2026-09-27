@@ -172,9 +172,10 @@ def update():
 
 
 @cli.command()
-@click.option("--port", default=5000, help="Port for the dashboard backend.")
+@click.option("--port", default=5000, show_default=True, help="Port for the dashboard backend.")
+@click.option("--host", default="127.0.0.1", show_default=True, help="Host/IP to bind the backend server.")
 @click.option("--no-browser", is_flag=True, default=False, help="Do not prompt to open browser.")
-def dashboard(port, no_browser):
+def dashboard(port, host, no_browser):
     """Launch the DARKWIN web dashboard.
 
     \b
@@ -185,16 +186,17 @@ def dashboard(port, no_browser):
       cd dashboard/frontend && npm run dev
 
     \b
+      --host   Backend bind host (default: 127.0.0.1)
       --port   Backend port (default: 5000)
     """
     import webbrowser
     console.print("[bold cyan]Initializing DARKWIN Dashboard...[/bold cyan]")
-    
+
     # 1. Start the Flask backend
-    _start_dashboard(port=port)
-    
+    _start_dashboard(port=port, host=host)
+
     # 2. Inform user about the frontend
-    console.print("\n[bold white]Backend API:[/bold white]   [cyan]http://localhost:" + str(port) + "[/cyan]")
+    console.print(f"\n[bold white]Backend API:[/bold white]   [cyan]http://{host}:{port}[/cyan]")
     console.print("[bold white]Frontend GUI:[/bold white]  [cyan]http://localhost:3000[/cyan]")
     console.print("\n[dim]To start the frontend, run:[/dim]")
     console.print("  [bold green]cd dashboard/frontend && npm run dev[/bold green]")
@@ -216,31 +218,35 @@ def dashboard(port, no_browser):
         sys.exit(0)
 
 
-def _start_dashboard(port=5000):
+def _start_dashboard(port=5000, host=None):
     """Start the Flask dashboard backend in a background thread."""
     import os
     import threading
+
+    # Resolution order: CLI --host arg → DARKWIN_HOST env var → loopback default
+    resolved_host = os.environ.get("DARKWIN_HOST", host if host else "127.0.0.1")
+
     try:
         from dashboard.backend.app import create_app
         app, socketio = create_app()
-        # Disable logging for cleaner output
+        # Silence Werkzeug request logs for cleaner terminal output
         import logging
-        log = logging.getLogger('werkzeug')
-        log.setLevel(logging.ERROR)
+        logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
-        # Default to loopback so the dashboard isn't exposed on the LAN unless
-        # the operator explicitly opts in via DARKWIN_HOST=0.0.0.0.
-        host = os.environ.get("DARKWIN_HOST", "127.0.0.1")
         thread = threading.Thread(
-            target=lambda: socketio.run(app, host=host, port=port, debug=False, allow_unsafe_werkzeug=True),
+            target=lambda: socketio.run(
+                app, host=resolved_host, port=port,
+                debug=False, allow_unsafe_werkzeug=True
+            ),
             daemon=True,
         )
         thread.start()
-        console.print(f"[bold green]✔ Backend running on {host}:{port}[/bold green]")
+        console.print(f"[bold green]✔ Backend running on {resolved_host}:{port}[/bold green]")
     except ImportError:
         console.print("[bold red]✗ Dashboard dependencies missing.[/bold red]")
         console.print("[dim]Run: pip install flask flask-socketio flask-cors[/dim]")
         sys.exit(1)
+
 
 
 def main():
