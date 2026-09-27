@@ -14,6 +14,7 @@ import {
   getTargets,
   getStats,
   getCurrentScan,
+  getTargetVulns,
   startScan,
   stopScan,
   deleteTarget,
@@ -44,6 +45,8 @@ export default function DashboardPage() {
   const [socketStatus, setSocketStatus] = useState<"connected" | "disconnected" | "reconnecting">("disconnected");
   const [scanModalOpen, setScanModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [findings, setFindings] = useState<VulnerabilityFinding[]>([]);
+  const [findingsLoading, setFindingsLoading] = useState(false);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -69,6 +72,16 @@ export default function DashboardPage() {
     } catch {
       // ignore
     }
+  }, [selectedTarget]);
+
+  // Fetch vulnerabilities whenever the selected target changes
+  useEffect(() => {
+    if (!selectedTarget) return;
+    setFindingsLoading(true);
+    getTargetVulns(selectedTarget)
+      .then((data) => setFindings(data))
+      .catch(() => setFindings([]))
+      .finally(() => setFindingsLoading(false));
   }, [selectedTarget]);
 
   useEffect(() => {
@@ -240,7 +253,13 @@ export default function DashboardPage() {
             />
           )}
 
-          {activeTab === "vulns" && <VulnerabilitiesView findings={[]} />}
+          {activeTab === "vulns" && (
+            <VulnerabilitiesView
+              findings={findings}
+              loading={findingsLoading}
+              selectedTarget={selectedTarget}
+            />
+          )}
 
           {activeTab === "terminal" && (
             <TerminalView
