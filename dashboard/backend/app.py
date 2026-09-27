@@ -16,7 +16,7 @@ _current_scan = {"scan_id": None, "target": None, "mode": None, "status": "idle"
 _scan_history = []
 _abort_requested = False
 
-DEFAULT_CORS_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
+DEFAULT_CORS_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001,http://localhost:3002,http://127.0.0.1:3002"
 
 def _err(msg, code=400):
     return jsonify({"error": msg, "code": code}), code
@@ -270,6 +270,7 @@ def create_app(reports_dir: str = None, logs_dir: str = None):
         return jsonify({name: info["installed"] for name, info in all_tools.items()})
 
     @app.route("/api/tools/detailed", methods=["GET"])
+    @app.route("/tools/detailed", methods=["GET"])
     def tools_detailed():
         from core.tool_loader import ToolLoader
         loader = ToolLoader()
