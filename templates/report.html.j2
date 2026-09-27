@@ -3,229 +3,705 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DARKWIN Report — {{ target }}</title>
+  <title>DARKWIN Executive Assessment Report — {{ target }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0d0d0d;
-      --surface: #161616;
-      --surface2: #1e1e1e;
-      --border: #2a2a2a;
-      --accent: #00ff88;
-      --accent2: #00bfff;
-      --red: #ff4d4d;
-      --yellow: #ffd700;
-      --text: #e0e0e0;
-      --dim: #888;
+      --bg: #090d16;
+      --bg-card: #0f172a;
+      --bg-card-hover: #1e293b;
+      --border: #1e293b;
+      --border-light: #334155;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.15);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.15);
+      --red: #ef4444;
+      --red-glow: rgba(239, 68, 68, 0.15);
+      --amber: #f59e0b;
+      --amber-glow: rgba(245, 158, 11, 0.15);
+      --blue: #3b82f6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Courier New', monospace;
-      line-height: 1.6;
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.5;
+      padding-bottom: 5rem;
     }
-    header {
-      background: linear-gradient(135deg, #0a0a0a 0%, #111 100%);
-      border-bottom: 1px solid var(--accent);
-      padding: 2rem 3rem;
+    code, pre, .mono {
+      font-family: 'JetBrains Mono', monospace;
     }
-    header h1 {
-      font-size: 2rem;
-      color: var(--accent);
-      letter-spacing: 4px;
-      text-transform: uppercase;
-    }
-    header .meta {
-      margin-top: 1rem;
-      display: flex;
-      gap: 2rem;
-      flex-wrap: wrap;
-    }
-    header .meta-item {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 0.5rem 1rem;
-    }
-    header .meta-item span { color: var(--dim); font-size: 0.75rem; display: block; }
-    header .meta-item strong { color: var(--accent2); font-size: 0.95rem; }
 
-    .container { max-width: 1400px; margin: 0 auto; padding: 2rem 3rem; }
-
-    .toc {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-    }
-    .toc h2 { color: var(--accent2); margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; }
-    .toc ul { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .toc ul li a {
-      color: var(--accent);
-      text-decoration: none;
-      font-size: 0.8rem;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
-      transition: all 0.2s;
-    }
-    .toc ul li a:hover { background: var(--accent); color: #000; }
-
-    .module {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      margin-bottom: 1.5rem;
-      overflow: hidden;
-    }
-    .module-header {
-      background: var(--surface2);
-      padding: 1rem 1.5rem;
+    /* Top Action Bar (hidden in print) */
+    .action-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 2rem;
       display: flex;
       align-items: center;
-      gap: 1rem;
-      border-bottom: 1px solid var(--border);
+      justify-content: space-between;
     }
-    .module-header h3 {
-      color: var(--accent2);
+    .action-bar .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
       font-size: 0.95rem;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+    }
+    .action-bar .btn-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border-light);
+      color: var(--text-main);
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background: #334155;
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .btn-primary {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #0369a1;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
+    }
+
+    /* Executive Header */
+    .executive-header {
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.4) 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem 2.5rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .executive-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #38bdf8, #10b981, #6366f1);
+    }
+    .badge-classified {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      margin-bottom: 0.75rem;
+    }
+    .header-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    .header-title h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .header-title p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+    .risk-badge {
+      padding: 0.6rem 1.25rem;
+      border-radius: 8px;
+      text-align: right;
+      border: 1px solid transparent;
+    }
+    .risk-badge.CRITICAL {
+      background: var(--red-glow);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+    .risk-badge.HIGH {
+      background: var(--amber-glow);
+      border-color: rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+    }
+    .risk-badge.MEDIUM {
+      background: rgba(234, 179, 8, 0.15);
+      border-color: rgba(234, 179, 8, 0.4);
+      color: #facc15;
+    }
+    .risk-badge.SECURE, .risk-badge.LOW {
+      background: var(--emerald-glow);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
+    .risk-badge span {
+      display: block;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 1px;
+      font-weight: 600;
+      opacity: 0.8;
     }
-    .module-header .badge {
-      font-size: 0.7rem;
-      padding: 0.2rem 0.6rem;
-      border-radius: 10px;
-      background: var(--accent);
-      color: #000;
-      font-weight: bold;
+    .risk-badge strong {
+      font-size: 1.3rem;
+      font-weight: 800;
     }
-    .module-header .file-path {
-      margin-left: auto;
-      color: var(--dim);
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.75rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+    .meta-item span {
+      display: block;
       font-size: 0.75rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .module-content {
-      padding: 1rem 1.5rem;
+    .meta-item strong {
+      font-size: 0.95rem;
+      color: var(--text-main);
+      font-weight: 600;
     }
-    pre {
-      background: #0a0a0a;
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .kpi-card {
+      background: var(--bg-card);
       border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      transition: border-color 0.2s;
+    }
+    .kpi-card:hover {
+      border-color: var(--border-light);
+    }
+    .kpi-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kpi-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 0.5rem;
+      line-height: 1;
+    }
+    .kpi-footer {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 0.5rem;
+    }
+
+    /* Section Cards */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+    .section-header {
+      padding: 1.25rem 1.75rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .section-header h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .section-body {
+      padding: 1.75rem;
+    }
+
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .data-table th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      background: #090d16;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    .data-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+      color: var(--text-main);
+    }
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+    .data-table tr:hover td {
+      background: rgba(30, 41, 59, 0.3);
+    }
+
+    /* Badges */
+    .tag {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
       border-radius: 4px;
-      padding: 1rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .tag-critical { background: var(--red-glow); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .tag-high { background: var(--amber-glow); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .tag-medium { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+    .tag-low { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .tag-info { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+    /* Findings Cards */
+    .finding-card {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .finding-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .finding-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .finding-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .poc-block {
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-size: 0.8rem;
+      color: #38bdf8;
       overflow-x: auto;
+      margin-bottom: 0.75rem;
+    }
+    .remediation-box {
+      background: rgba(16, 185, 129, 0.08);
+      border-left: 3px solid var(--emerald);
+      padding: 0.6rem 0.85rem;
+      border-radius: 0 4px 4px 0;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+    }
+
+    /* Subdomains Pill Cloud */
+    .pill-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+    .pill {
+      background: #090d16;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.8rem;
+      color: #93c5fd;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Accordion / Module Details */
+    details {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+    }
+    summary {
+      padding: 0.85rem 1.25rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+      background: rgba(30, 41, 59, 0.25);
+    }
+    summary:hover {
+      background: rgba(30, 41, 59, 0.5);
+    }
+    .details-content {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+    pre.code-block {
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem;
       font-size: 0.78rem;
-      color: #ccc;
-      max-height: 400px;
+      color: #cbd5e1;
+      max-height: 350px;
       overflow-y: auto;
       white-space: pre-wrap;
       word-break: break-all;
     }
-    .empty { color: var(--dim); font-style: italic; font-size: 0.85rem; }
 
     footer {
-      border-top: 1px solid var(--border);
       text-align: center;
-      padding: 1.5rem;
-      color: var(--dim);
+      padding: 3rem 1rem 1rem;
+      color: var(--text-dim);
       font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      margin-top: 3rem;
     }
-    footer span { color: var(--accent); }
+    footer strong {
+      color: var(--accent);
+    }
 
-    .warning-banner {
-      background: linear-gradient(90deg, #2a1a00, #1a0000);
-      border: 1px solid var(--yellow);
-      border-radius: 8px;
-      padding: 1rem 1.5rem;
-      margin-bottom: 2rem;
-      color: var(--yellow);
-      font-size: 0.85rem;
+    /* Print Optimization */
+    @media print {
+      .action-bar { display: none !important; }
+      body {
+        background: #fff !important;
+        color: #0f172a !important;
+        padding-bottom: 0 !important;
+      }
+      .executive-header {
+        background: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #0f172a !important;
+      }
+      .header-title h1 { color: #0f172a !important; }
+      .header-title p { color: #475569 !important; }
+      .kpi-card, .section-card, .finding-card, details {
+        background: #fff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #0f172a !important;
+        page-break-inside: avoid;
+      }
+      .kpi-value { color: #0f172a !important; }
+      .data-table th { background: #f1f5f9 !important; color: #475569 !important; }
+      .data-table td { color: #0f172a !important; border-bottom: 1px solid #e2e8f0 !important; }
+      .poc-block, pre.code-block {
+        background: #f8fafc !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
+      }
     }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>⚡ DARKWIN</h1>
-  <div style="color: var(--dim); font-size:0.8rem; margin-top:0.25rem;">Advanced Automation Toolkit — Scan Report</div>
-  <div class="meta">
-    <div class="meta-item">
-      <span>Target</span>
-      <strong>{{ target }}</strong>
+  <!-- Top Action Navigation -->
+  <div class="action-bar">
+    <div class="brand">
+      <span>⚡ DARKWIN v1.3.0</span>
+      <span style="color: var(--text-dim);">|</span>
+      <span style="font-weight: 400; color: var(--text-muted); font-size: 0.85rem;">Executive Security Assessment Report</span>
     </div>
-    <div class="meta-item">
-      <span>Scan Date</span>
-      <strong>{{ scan_date }}</strong>
-    </div>
-    <div class="meta-item">
-      <span>Modules Run</span>
-      <strong>{{ modules|length }}</strong>
-    </div>
-    <div class="meta-item">
-      <span>Output Directory</span>
-      <strong>{{ output_dir }}</strong>
-    </div>
-    <div class="meta-item">
-      <span>Generated By</span>
-      <strong>{{ generated_by }}</strong>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="window.print()">
+        🖨️ Print / Save PDF
+      </button>
+      <a class="btn" href="#findings">
+        🛡️ Findings ({{ findings|length }})
+      </a>
+      <a class="btn" href="#assets">
+        🌐 Assets ({{ subdomains|length }})
+      </a>
+      <a class="btn" href="#evidence">
+        📂 Raw Artifacts
+      </a>
     </div>
   </div>
-</header>
 
-<div class="container">
+  <div class="container">
 
-  <div class="warning-banner">
-    ⚠ <strong>AUTHORIZED USE ONLY</strong> — This report was generated by DARKWIN for authorized security testing purposes only.
-    Unauthorized use of this data or the tools that produced it is illegal.
-  </div>
+    <!-- Executive Header Card -->
+    <div class="executive-header">
+      <div class="badge-classified">CONFIDENTIAL &bull; FOR AUTHORIZED OPERATORS ONLY</div>
+      <div class="header-title-row">
+        <div class="header-title">
+          <h1>{{ target }}</h1>
+          <p>Comprehensive Cyber Attack Surface & Automated Security Assessment</p>
+        </div>
+        <div class="risk-badge {{ risk_level }}">
+          <span>Threat Exposure Level</span>
+          <strong>{{ risk_level }}</strong>
+        </div>
+      </div>
 
-  <!-- Table of Contents -->
-  <div class="toc">
-    <h2>📋 Modules</h2>
-    <ul>
-      {% for key, data in modules.items() %}
-      <li><a href="#{{ key }}">{{ key.replace('_', ' ').title() }}</a></li>
-      {% endfor %}
-    </ul>
-  </div>
-
-  <!-- Module Results -->
-  {% for key, data in modules.items() %}
-  <div class="module" id="{{ key }}">
-    <div class="module-header">
-      <h3>{{ key.replace('_', ' ').title() }}</h3>
-      <span class="badge">{{ data.type | upper }}</span>
-      <span class="file-path">{{ data.file }}</span>
+      <div class="meta-grid">
+        <div class="meta-item">
+          <span>Target Host</span>
+          <strong class="mono">{{ target }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Assessment Timestamp</span>
+          <strong>{{ scan_date }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Toolkit Framework</span>
+          <strong>{{ generated_by }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Lead Security Engineer</span>
+          <strong>{{ author }}</strong>
+        </div>
+      </div>
     </div>
-    <div class="module-content">
-      {% if data.type == 'json' %}
-        {% if data.content %}
-          <pre>{{ data.content | tojson(indent=2) }}</pre>
+
+    <!-- KPI Metric Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">
+          <span>Discovered Subdomains</span>
+          <span>🌐</span>
+        </div>
+        <div class="kpi-value">{{ subdomains|length }}</div>
+        <div class="kpi-footer">Enumerated attack vectors</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">
+          <span>Open Ports / Services</span>
+          <span>🔌</span>
+        </div>
+        <div class="kpi-value">{{ ports|length }}</div>
+        <div class="kpi-footer">Network boundary exposure</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">
+          <span>Crawled Endpoints</span>
+          <span>🔗</span>
+        </div>
+        <div class="kpi-value">{{ urls|length }}</div>
+        <div class="kpi-footer">Application routing paths</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">
+          <span>Vulnerability Findings</span>
+          <span>🛡️</span>
+        </div>
+        <div class="kpi-value" style="color: {% if findings|length > 0 %}#f87171{% else %}#34d399{% endif %};">
+          {{ findings|length }}
+        </div>
+        <div class="kpi-footer">Actionable weaknesses</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">
+          <span>OSINT Identities</span>
+          <span>📧</span>
+        </div>
+        <div class="kpi-value">{{ emails|length }}</div>
+        <div class="kpi-footer">Harvested intelligence</div>
+      </div>
+    </div>
+
+    <!-- Findings & Vulnerabilities Section -->
+    <div class="section-card" id="findings">
+      <div class="section-header">
+        <h2>🛡️ Vulnerability & Security Findings Matrix</h2>
+        <span class="tag {% if findings|length > 0 %}tag-critical{% else %}tag-info{% endif %}">
+          {{ findings|length }} Findings Recorded
+        </span>
+      </div>
+      <div class="section-body">
+        {% if findings %}
+          {% for f in findings %}
+          <div class="finding-card">
+            <div class="finding-header">
+              <span class="finding-title">{{ f.title }}</span>
+              <span class="tag tag-{{ f.severity|lower }}">{{ f.severity }}</span>
+            </div>
+            <div class="finding-meta">
+              <strong>Category:</strong> {{ f.category }} &bull;
+              <strong>Target Asset:</strong> <span class="mono text-sky-400">{{ f.target }}</span>
+            </div>
+            {% if f.description %}
+            <p style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 0.75rem;">
+              {{ f.description }}
+            </p>
+            {% endif %}
+            {% if f.poc %}
+            <div class="poc-block mono">{{ f.poc }}</div>
+            {% endif %}
+            {% if f.remediation %}
+            <div class="remediation-box">
+              <strong>Remediation:</strong> {{ f.remediation }}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
         {% else %}
-          <span class="empty">No results captured.</span>
+          <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">✅</div>
+            <h3 style="color: #fff; margin-bottom: 0.25rem;">No High-Risk Vulnerabilities Identified</h3>
+            <p style="font-size: 0.85rem;">The automated scanners detected no critical exploits during this execution session.</p>
+          </div>
         {% endif %}
-      {% else %}
-        {% if data.content and data.content.strip() %}
-          <pre>{{ data.content[:5000] }}</pre>
-        {% else %}
-          <span class="empty">No results captured.</span>
-        {% endif %}
-      {% endif %}
+      </div>
     </div>
+
+    <!-- Attack Surface Reconnaissance Section -->
+    <div class="section-card" id="assets">
+      <div class="section-header">
+        <h2>🌐 Attack Surface Infrastructure</h2>
+        <span class="tag tag-info">{{ subdomains|length }} Hostnames</span>
+      </div>
+      <div class="section-body">
+        <h4 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.5px;">
+          Discovered Subdomains & Hostnames
+        </h4>
+        {% if subdomains %}
+        <div class="pill-cloud">
+          {% for sub in subdomains %}
+          <div class="pill">{{ sub }}</div>
+          {% endfor %}
+        </div>
+        {% else %}
+          <p style="color: var(--text-dim); font-size: 0.85rem;">No subdomains discovered.</p>
+        {% endif %}
+
+        {% if osint %}
+        <div style="margin-top: 2rem;">
+          <h4 style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem; letter-spacing: 0.5px;">
+            OSINT Intelligence & External Infrastructure
+          </h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+            {% for key, val in osint.items() %}
+            <div style="background: #090d16; border: 1px solid var(--border); border-radius: 8px; padding: 1rem;">
+              <strong style="color: var(--accent); font-size: 0.85rem; text-transform: uppercase;">
+                {{ key.replace('_', ' ') }}
+              </strong>
+              <div style="margin-top: 0.5rem; font-size: 0.8rem; color: #cbd5e1; max-height: 140px; overflow-y: auto;">
+                <pre class="mono" style="font-size: 0.75rem;">{{ val[:1000] if val is string else val }}</pre>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Raw Evidence & Tool Logs -->
+    <div class="section-card" id="evidence">
+      <div class="section-header">
+        <h2>📂 Raw Evidence Artifacts & Tool Telemetry</h2>
+        <span class="tag tag-info">{{ modules|length }} Result Files</span>
+      </div>
+      <div class="section-body">
+        {% for key, data in modules.items() %}
+        <details>
+          <summary>
+            <span>{{ key.replace('_', ' ').title() }}</span>
+            <span class="tag tag-info">{{ data.type|upper }}</span>
+          </summary>
+          <div class="details-content">
+            <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem;" class="mono">
+              Source: {{ data.file }}
+            </div>
+            {% if data.type == 'json' %}
+              <pre class="code-block mono">{{ data.content | tojson(indent=2) }}</pre>
+            {% else %}
+              <pre class="code-block mono">{{ data.content[:10000] if data.content else "No contents captured." }}</pre>
+            {% endif %}
+          </div>
+        </details>
+        {% else %}
+        <p style="color: var(--text-dim); text-align: center; padding: 1.5rem;">
+          No artifact files collected.
+        </p>
+        {% endfor %}
+      </div>
+    </div>
+
   </div>
-  {% else %}
-  <p style="color: var(--dim); text-align: center; padding: 3rem;">
-    No scan results found. Run a pipeline first.
-  </p>
-  {% endfor %}
 
-</div>
-
-<footer>
-  Generated by <span>DARKWIN v1.0.0</span> &mdash; Developed by **ARYAN AHIRWAR (VIPHACKER.100)** &mdash; {{ scan_date }}
-</footer>
+  <footer>
+    Generated by <strong>{{ generated_by }}</strong> &bull; Developed by <strong>{{ author }}</strong> &bull; {{ scan_date }}
+  </footer>
 
 </body>
 </html>
+

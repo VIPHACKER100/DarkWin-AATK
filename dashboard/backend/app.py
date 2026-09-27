@@ -35,8 +35,8 @@ RE_ID = r"[A-Za-z0-9_.-]+"
 def create_app(reports_dir: str = None, logs_dir: str = None):
     global _current_scan, _scan_history, _abort_requested
 
-    # Support both reports and results dirs
     project_root = Path(__file__).resolve().parent.parent.parent
+    explicit_reports = reports_dir is not None
     default_reports = "reports" if (project_root / "reports").exists() else "results"
     reports_dir = reports_dir or os.environ.get("DARKWIN_REPORTS_DIR", default_reports)
     logs_dir = logs_dir or os.environ.get("DARKWIN_LOGS_DIR", "logs")
@@ -71,14 +71,24 @@ def create_app(reports_dir: str = None, logs_dir: str = None):
     reports_base.mkdir(parents=True, exist_ok=True)
     logs_base.mkdir(parents=True, exist_ok=True)
 
+    def _get_search_bases():
+        if explicit_reports:
+            return [reports_base]
+        bases = []
+        for candidate in [
+            reports_base,
+            (project_root / "reports").resolve(),
+            (project_root / "results").resolve(),
+            Path("reports").resolve(),
+            Path("results").resolve(),
+        ]:
+            if candidate and candidate.exists() and candidate not in bases:
+                bases.append(candidate)
+        return bases
+
     def _get_all_targets():
         from core.target import safe_target
-        # Check both reports and results if they differ
-        bases = [reports_base]
-        results_dir = project_root / "results"
-        if results_dir.exists() and results_dir != reports_base:
-            bases.append(results_dir)
-
+        bases = _get_search_bases()
         targets_map = {}
         for base in bases:
             if not base.exists():
@@ -114,18 +124,127 @@ def create_app(reports_dir: str = None, logs_dir: str = None):
     @app.route("/report/<target>/<session>", methods=["GET"])
     @app.route("/api/report/<target>/<session>", methods=["GET"])
     def get_report(target: str, session: str):
-        # Look in reports_base or project_root/results
-        candidate_bases = [reports_base, project_root / "results"]
-        for base in candidate_bases:
+        bases = _get_search_bases()
+        found_spath = None
+
+        for base in bases:
             try:
                 tpath = _safe_path(base, target, RE_ID)
                 spath = _safe_path(tpath, session, RE_ID)
-                report_path = spath / "report.html"
-                if report_path.exists():
-                    return send_from_directory(str(spath), "report.html", mimetype="text/html")
+                if spath.exists() and spath.is_dir():
+                    found_spath = spath
+                    break
             except Exception:
                 continue
+
+        if found_spath:
+            report_path = found_spath / "report.html"
+            # Auto-generate executive report on-the-fly if not already created
+            if not report_path.exists():
+                try:
+                    from modules.reporting.html_report import generate_executive_report
+                    generate_executive_report(target, str(found_spath))
+                except Exception as e:
+                    app.logger.warning(f"Could not auto-generate report: {e}")
+
+            if report_path.exists():
+                return send_from_directory(str(found_spath), "report.html", mimetype="text/html")
+
+        # Beautiful HTML fallback for iframe embedding when report does not exist
+        if request.accept_mimetypes.accept_html and not request.headers.get("Accept", "").startswith("application/json"):
+            html_404 = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Executive Report Missing — DARKWIN</title>
+  <style>
+    body {{
+      background: #090d16;
+      color: #94a3b8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 1.5rem;
+      box-sizing: border-box;
+    }}
+    .box {{
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 2.5rem;
+      text-align: center;
+      max-width: 520px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }}
+    .icon {{ font-size: 3rem; margin-bottom: 1rem; }}
+    h2 {{ color: #f8fafc; font-size: 1.4rem; margin-bottom: 0.5rem; }}
+    p {{ font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem; }}
+    .badge {{
+      background: rgba(56, 189, 248, 0.1);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }}
+    .info {{
+      font-size: 0.8rem;
+      color: #64748b;
+      border-top: 1px solid #1e293b;
+      padding-top: 1rem;
+    }}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="icon">📑</div>
+    <h2>Executive Report Not Found</h2>
+    <p>No telemetry artifacts or report exists for target <span class="badge">{target}</span> in session <span class="badge">{session}</span>.</p>
+    <div class="info">
+      Run a scan (Recon, Vuln, or Full) from the sidebar wizard to generate live security telemetry and an interactive executive report.
+    </div>
+  </div>
+</body>
+</html>"""
+            return html_404, 404, {"Content-Type": "text/html"}
+
         return _err("Report not found", 404)
+
+    @app.route("/report/<target>/<session>/generate", methods=["POST"])
+    @app.route("/api/report/<target>/<session>/generate", methods=["POST"])
+    def regenerate_report(target: str, session: str):
+        bases = _get_search_bases()
+        found_spath = None
+        for base in bases:
+            try:
+                tpath = _safe_path(base, target, RE_ID)
+                spath = _safe_path(tpath, session, RE_ID)
+                if spath.exists() and spath.is_dir():
+                    found_spath = spath
+                    break
+            except Exception:
+                continue
+
+        if not found_spath:
+            return _err("Session folder not found", 404)
+
+        try:
+            from modules.reporting.html_report import generate_executive_report
+            report_file = generate_executive_report(target, str(found_spath))
+            return jsonify({
+                "status": "success",
+                "message": "Executive report generated successfully",
+                "target": target,
+                "session": session,
+                "report_path": report_file,
+                "url": f"/report/{target}/{session}"
+            })
+        except Exception as e:
+            return _err(f"Failed to generate report: {e}", 500)
 
     @app.route("/status/<scan_id>", methods=["GET"])
     @app.route("/api/status/<scan_id>", methods=["GET"])
@@ -160,7 +279,7 @@ def create_app(reports_dir: str = None, logs_dir: str = None):
     @app.route("/api/target/<target>", methods=["DELETE"])
     def delete_target(target: str):
         deleted = False
-        for base in [reports_base, project_root / "results"]:
+        for base in _get_search_bases():
             try:
                 tpath = _safe_path(base, target, RE_ID)
                 if tpath.exists():
@@ -177,7 +296,7 @@ def create_app(reports_dir: str = None, logs_dir: str = None):
     @app.route("/api/target/<target>/<session>", methods=["DELETE"])
     def delete_session(target: str, session: str):
         deleted = False
-        for base in [reports_base, project_root / "results"]:
+        for base in _get_search_bases():
             try:
                 tpath = _safe_path(base, target, RE_ID)
                 spath = _safe_path(tpath, session, RE_ID)
@@ -203,7 +322,7 @@ def create_app(reports_dir: str = None, logs_dir: str = None):
 
         # Search for target folder in reports or results
         target_dir = None
-        for base in [reports_base, project_root / "results"]:
+        for base in _get_search_bases():
             candidate = base / clean_target
             if candidate.exists() and candidate.is_dir():
                 target_dir = candidate
@@ -286,7 +405,7 @@ def create_app(reports_dir: str = None, logs_dir: str = None):
 
         # Check for findings.json or nuclei_findings.json
         findings = []
-        for base in [reports_base, project_root / "results"]:
+        for base in _get_search_bases():
             target_dir = base / clean_target
             if not target_dir.exists():
                 continue

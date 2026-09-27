@@ -97,6 +97,11 @@ export const getTargetVulns = async (target: string): Promise<VulnerabilityFindi
 export const getReportUrl = (target: string, session: string) =>
   `${API_BASE}/report/${encodeURIComponent(target)}/${encodeURIComponent(session)}`;
 
+export const regenerateReport = async (target: string, session: string): Promise<{ status: string; message: string; url: string }> => {
+  const { data } = await api.post(`/report/${encodeURIComponent(target)}/${encodeURIComponent(session)}/generate`);
+  return data;
+};
+
 export const getStatus = async (scanId: string) => {
   const { data } = await api.get(`/status/${scanId}`);
   return data as { scan_id: string; lines: string[] };

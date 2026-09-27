@@ -18,7 +18,9 @@ def test_check_tool_returns_false_for_nonexistent_binary():
 
 def test_check_tool_returns_true_for_ls():
     from core.tool_loader import check_tool
-    assert check_tool("ls") is True
+    import sys
+    tool = "cmd" if sys.platform.startswith("win") else "ls"
+    assert check_tool(tool) is True
 
 
 @patch("core.tool_loader.check_tool", return_value=True)

@@ -19,8 +19,12 @@ import {
   Download,
   AlertCircle,
   Clock,
+  Printer,
+  RefreshCw,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
-import { TargetItem, TargetAssets, getTargetAssets, getReportUrl } from "@/lib/api";
+import { TargetItem, TargetAssets, getTargetAssets, getReportUrl, regenerateReport } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 interface TargetsViewProps {
@@ -44,8 +48,24 @@ export function TargetsView({
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
+  const [reportKey, setReportKey] = useState(0);
+  const [reportFullscreen, setReportFullscreen] = useState(false);
 
   const currentTargetObj = targets.find((t) => t.target === selectedTarget) || targets[0];
+
+  const handleRegenerateReport = async () => {
+    if (!currentTargetObj?.target || !selectedSession) return;
+    try {
+      setRegenerating(true);
+      await regenerateReport(currentTargetObj.target, selectedSession);
+      setReportKey((prev) => prev + 1);
+    } catch (err) {
+      console.error("Failed to regenerate report", err);
+    } finally {
+      setRegenerating(false);
+    }
+  };
 
   useEffect(() => {
     if (currentTargetObj) {
@@ -364,18 +384,85 @@ export function TargetsView({
                 </div>
               ) : (
                 /* Report View Tab */
-                <div className="h-[550px] w-full border border-slate-800 rounded-xl overflow-hidden bg-white">
-                  {selectedSession ? (
-                    <iframe
-                      src={getReportUrl(currentTargetObj.target, selectedSession)}
-                      className="w-full h-full border-0"
-                      title="Scan Report"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-slate-600 font-mono text-xs">
-                      No report available for this session.
+                <div className={cn(
+                  "flex flex-col border border-slate-800 rounded-xl overflow-hidden bg-slate-950 transition-all",
+                  reportFullscreen ? "fixed inset-4 z-50 shadow-2xl" : "h-[620px] w-full"
+                )}>
+                  {/* Executive Report Action Toolbar */}
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 text-xs font-mono shrink-0">
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <FileText className="h-4 w-4 text-emerald-400" />
+                      <span className="font-semibold text-slate-100">Executive Assessment Report</span>
+                      {selectedSession && (
+                        <span className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/50">
+                          {selectedSession}
+                        </span>
+                      )}
                     </div>
-                  )}
+                    {selectedSession && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleRegenerateReport}
+                          disabled={regenerating}
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors disabled:opacity-50"
+                          title="Recompile report from raw session artifacts"
+                        >
+                          <RefreshCw className={cn("h-3 w-3 text-sky-400", regenerating && "animate-spin")} />
+                          <span>{regenerating ? "Compiling..." : "Recompile"}</span>
+                        </button>
+                        <a
+                          href={getReportUrl(currentTargetObj.target, selectedSession)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
+                          title="Open report in full browser tab"
+                        >
+                          <ExternalLink className="h-3 w-3 text-blue-400" />
+                          <span>New Tab</span>
+                        </a>
+                        <button
+                          onClick={() => {
+                            const iframe = document.getElementById("executive-report-frame") as HTMLIFrameElement;
+                            if (iframe?.contentWindow) {
+                              iframe.contentWindow.print();
+                            } else {
+                              window.open(getReportUrl(currentTargetObj.target, selectedSession), "_blank");
+                            }
+                          }}
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/50 transition-colors"
+                          title="Print or save as PDF"
+                        >
+                          <Printer className="h-3 w-3" />
+                          <span>Print / PDF</span>
+                        </button>
+                        <button
+                          onClick={() => setReportFullscreen(!reportFullscreen)}
+                          className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                          title={reportFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                        >
+                          {reportFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Iframe Viewport */}
+                  <div className="flex-1 w-full h-full relative bg-slate-950">
+                    {selectedSession ? (
+                      <iframe
+                        id="executive-report-frame"
+                        key={`${currentTargetObj.target}-${selectedSession}-${reportKey}`}
+                        src={getReportUrl(currentTargetObj.target, selectedSession)}
+                        className="w-full h-full border-0"
+                        title="Executive Report"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-slate-500 font-mono text-xs gap-2">
+                        <FileText className="h-8 w-8 text-slate-600" />
+                        <span>Select a scan session from the dropdown above to view the executive report.</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
