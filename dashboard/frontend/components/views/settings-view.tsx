@@ -10,12 +10,31 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
-  Shield,
 } from "lucide-react";
 import { getConfig, saveConfig } from "@/lib/api";
 
+export interface DarkWinConfig {
+  general?: {
+    threads?: number;
+    timeout?: number;
+    user_agent?: string;
+  };
+  api_keys?: {
+    github_token?: string;
+    hibp_api_key?: string;
+    hunter_api_key?: string;
+    shodan_api_key?: string;
+    [key: string]: string | undefined;
+  };
+  reporting?: {
+    author?: string;
+    company?: string;
+  };
+  [key: string]: any;
+}
+
 export function SettingsView() {
-  const [config, setConfig] = useState<any>(null);
+  const [config, setConfig] = useState<DarkWinConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -25,20 +44,22 @@ export function SettingsView() {
   useEffect(() => {
     getConfig()
       .then(setConfig)
-      .catch((err) => setError("Failed to load engine configuration"))
+      .catch(() => setError("Failed to load engine configuration"))
       .finally(() => setLoading(false));
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!config) return;
     setSaving(true);
     setError(null);
     try {
       await saveConfig(config);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "Failed to save configuration");
+    } catch (err: unknown) {
+      const errorMsg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      setError(errorMsg || "Failed to save configuration");
     } finally {
       setSaving(false);
     }

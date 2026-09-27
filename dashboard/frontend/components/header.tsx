@@ -5,9 +5,6 @@ import {
   Play,
   Square,
   Search,
-  Activity,
-  Layers,
-  Sparkles,
   Loader2,
   RefreshCw,
 } from "lucide-react";

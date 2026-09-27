@@ -5,17 +5,15 @@ import {
   Activity,
   Target,
   ShieldAlert,
-  Server,
   Wrench,
   Play,
-  Clock,
   ArrowUpRight,
   CheckCircle2,
-  AlertTriangle,
   Zap,
 } from "lucide-react";
 import { SystemStats, CurrentScan, TargetItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { NavTab } from "@/components/sidebar";
 
 interface OverviewViewProps {
   stats: SystemStats | null;
@@ -23,7 +21,7 @@ interface OverviewViewProps {
   currentScan: CurrentScan;
   onOpenScanModal: () => void;
   onSelectTarget: (target: string) => void;
-  onNavigateToTab: (tab: any) => void;
+  onNavigateToTab: (tab: NavTab) => void;
 }
 
 export function OverviewView({

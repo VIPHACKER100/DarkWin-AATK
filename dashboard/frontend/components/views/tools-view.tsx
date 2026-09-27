@@ -7,8 +7,6 @@ import {
   XCircle,
   RefreshCw,
   Search,
-  ExternalLink,
-  ShieldCheck,
   AlertTriangle,
 } from "lucide-react";
 import { getToolsDetailed } from "@/lib/api";
@@ -33,7 +31,7 @@ export function ToolsView() {
 
   const toolEntries = Object.entries(tools);
   const total = toolEntries.length;
-  const installedCount = toolEntries.filter(([_, info]) => info.installed).length;
+  const installedCount = toolEntries.filter(([, info]) => info.installed).length;
   const missingCount = total - installedCount;
 
   const filtered = toolEntries.filter(([name, info]) =>

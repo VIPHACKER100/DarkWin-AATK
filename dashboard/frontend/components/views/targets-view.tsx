@@ -11,13 +11,9 @@ import {
   ExternalLink,
   Layers,
   Globe,
-  Radio,
   Server,
   Mail,
   FolderOpen,
-  Eye,
-  Download,
-  AlertCircle,
   Clock,
   Printer,
   RefreshCw,
@@ -191,7 +187,7 @@ export function TargetsView({
 
               {/* Session Selector */}
               {currentTargetObj.sessions.length > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5 text-slate-500" />
                   <select
                     value={selectedSession || ""}
@@ -204,6 +200,17 @@ export function TargetsView({
                       </option>
                     ))}
                   </select>
+                  <button
+                    onClick={() => {
+                      if (selectedSession && confirm(`Delete session ${selectedSession}?`)) {
+                        onDeleteSession(currentTargetObj.target, selectedSession);
+                      }
+                    }}
+                    className="p-1 text-slate-500 hover:text-red-400 transition-colors rounded"
+                    title="Delete this session"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
                 </div>
               )}
             </div>
@@ -223,7 +230,7 @@ export function TargetsView({
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => setActiveTab(tab.id as typeof activeTab)}
                     className={cn(
                       "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all shrink-0",
                       isActive

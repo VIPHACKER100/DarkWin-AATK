@@ -147,12 +147,12 @@ export const deleteSession = async (target: string, session: string) => {
   return data as { deleted: { target: string; session: string } };
 };
 
-export const getConfig = async (): Promise<any> => {
+export const getConfig = async (): Promise<Record<string, unknown>> => {
   const { data } = await api.get('/api/config');
   return data;
 };
 
-export const saveConfig = async (configData: any): Promise<any> => {
+export const saveConfig = async (configData: Record<string, unknown>): Promise<Record<string, unknown>> => {
   const { data } = await api.post('/api/config', configData);
   return data;
 };

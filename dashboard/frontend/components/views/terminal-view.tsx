@@ -8,9 +8,6 @@ import {
   Trash2,
   Copy,
   Check,
-  Maximize2,
-  Minimize2,
-  Radio,
   ArrowDown,
 } from "lucide-react";
 import { CurrentScan } from "@/lib/api";

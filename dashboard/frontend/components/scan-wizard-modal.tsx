@@ -47,8 +47,9 @@ export function ScanWizardModal({
     try {
       await onStartScan(target.trim(), mode);
       onClose();
-    } catch (err: any) {
-      setError(err?.response?.data?.error || err.message || "Failed to start scan");
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { error?: string } }; message?: string };
+      setError(errorObj?.response?.data?.error || errorObj?.message || "Failed to start scan");
     } finally {
       setLoading(false);
     }

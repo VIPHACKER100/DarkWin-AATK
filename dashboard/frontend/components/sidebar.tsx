@@ -9,9 +9,6 @@ import {
   Wrench,
   Settings,
   Zap,
-  Radio,
-  Wifi,
-  WifiOff,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
