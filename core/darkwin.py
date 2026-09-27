@@ -20,13 +20,24 @@ BANNER = """
 
 
 def print_banner():
-    console.print(Text(BANNER, style="bold cyan"))
-    console.print(
-        "  [bold white]DARKWIN v1.2.0[/bold white] — [dim]Advanced Automation Toolkit[/dim]"
-    )
-    console.print(
-        "  [bold cyan]Developed by: ARYAN AHIRWAR (VIPHACKER.100)[/bold cyan]\n"
-    )
+    try:
+        console.print(Text(BANNER, style="bold cyan"))
+    except Exception:
+        try:
+            console.print("[bold cyan]========================================[/bold cyan]")
+            console.print("[bold cyan]       DARKWIN - ATTACK TOOLKIT         [/bold cyan]")
+            console.print("[bold cyan]========================================[/bold cyan]")
+        except Exception:
+            pass
+    try:
+        console.print(
+            "  [bold white]DARKWIN v1.3.0[/bold white] — [dim]Advanced Automation Toolkit[/dim]"
+        )
+        console.print(
+            "  [bold cyan]Developed by: ARYAN AHIRWAR (VIPHACKER.100)[/bold cyan]\n"
+        )
+    except Exception:
+        pass
 
 
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
@@ -162,7 +173,8 @@ def update():
 
 @cli.command()
 @click.option("--port", default=5000, help="Port for the dashboard backend.")
-def dashboard(port):
+@click.option("--no-browser", is_flag=True, default=False, help="Do not prompt to open browser.")
+def dashboard(port, no_browser):
     """Launch the DARKWIN web dashboard.
 
     \b
@@ -187,8 +199,12 @@ def dashboard(port):
     console.print("\n[dim]To start the frontend, run:[/dim]")
     console.print("  [bold green]cd dashboard/frontend && npm run dev[/bold green]")
     
-    if click.confirm("\nOpen dashboard in browser?", default=True):
-        webbrowser.open("http://localhost:3000")
+    if not no_browser and sys.stdin.isatty():
+        try:
+            if click.confirm("\nOpen dashboard in browser?", default=True):
+                webbrowser.open("http://localhost:3000")
+        except Exception:
+            pass
         
     # Keep main thread alive
     import time

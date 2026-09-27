@@ -13,6 +13,7 @@ Welcome to the comprehensive documentation repository for **DarkWin - Automated 
 | [ARCHITECTURE.md](file:///c:/Users/vipha/Desktop/DarkWin-AATK/DOCS/ARCHITECTURE.md) | **Deep Architecture & Design Specification**: Concurrency model, lifecycle of a scan, target state management, subprocess isolation, and telemetry protocols. | Architects & Core Engineers |
 | [MODULES_CATALOG.md](file:///c:/Users/vipha/Desktop/DarkWin-AATK/DOCS/MODULES_CATALOG.md) | **Security Modules Catalog**: Exhaustive reference for all 50+ offensive modules across all 10 functional categories with artifacts, tools, and schemas. | Security Researchers & Tool Integrators |
 | [DEVELOPER_GUIDE.md](file:///c:/Users/vipha/Desktop/DarkWin-AATK/DOCS/DEVELOPER_GUIDE.md) | **Developer & Contributor Guide**: Instructions for writing custom modules, building pipelines, testing with pytest, mocking binaries, and code standards. | Contributors & Plugin Authors |
+| [DASHBOARD_PLAN.md](file:///c:/Users/vipha/Desktop/DarkWin-AATK/DOCS/DASHBOARD_PLAN.md) | **Professional Dashboard Blueprint**: Full architectural plan, UI/UX specification, and implementation roadmap for Dashboard v2.0. | Frontend Developers & UI/UX Designers |
 
 ---
 
