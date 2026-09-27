@@ -13,6 +13,8 @@ from flask_cors import CORS
 _current_scan = {"scan_id": None, "target": None, "mode": None, "status": "idle", "started_at": None, "phase": None, "progress": 0}
 _scan_history = []
 
+DEFAULT_CORS_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
+
 def _err(msg, code=400):
     return jsonify({"error": msg, "code": code}), code
 
@@ -31,12 +33,32 @@ def create_app(reports_dir: str = None, logs_dir: str = None):
 
     reports_dir = reports_dir or os.environ.get("DARKWIN_REPORTS_DIR", "reports")
     logs_dir = logs_dir or os.environ.get("DARKWIN_LOGS_DIR", "logs")
-    cors_origin = os.environ.get("DARKWIN_CORS_ORIGIN", "*")
+    # Optional bearer token: set DARKWIN_API_TOKEN to require Authorization
+    # on every HTTP call and Socket.IO connection. Empty = auth disabled.
+    api_token = os.environ.get("DARKWIN_API_TOKEN", "")
+    cors_value = os.environ.get("DARKWIN_CORS_ORIGIN", DEFAULT_CORS_ORIGINS)
+    cors_origins = [o.strip() for o in cors_value.split(",") if o.strip()]
 
     app = Flask(__name__)
     app.config["SECRET_KEY"] = os.environ.get("DARKWIN_SECRET", "darkwin-dev-secret")
-    CORS(app, origins=cors_origin)
-    socketio = SocketIO(app, cors_allowed_origins=cors_origin, async_mode="threading")
+    CORS(app, origins=cors_origins)
+    socketio = SocketIO(app, cors_allowed_origins=cors_origins, async_mode="threading")
+
+    @app.before_request
+    def _require_token():
+        if not api_token:
+            return None
+        supplied = request.headers.get("Authorization", "")
+        if supplied != f"Bearer {api_token}":
+            return jsonify({"error": "Unauthorized", "code": 401}), 401
+        return None
+
+    @socketio.on("connect")
+    def handle_connect(auth=None):
+        if not api_token:
+            return None
+        connected = os.environ.get("DARKWIN_API_TOKEN", "") == (auth or {}).get("token", "")
+        return connected
 
     logs_base = Path(logs_dir).resolve()
     reports_base = Path(reports_dir).resolve()
@@ -213,4 +235,6 @@ def create_app(reports_dir: str = None, logs_dir: str = None):
 if __name__ == "__main__":
     app, socketio = create_app()
     port = int(os.environ.get("DARKWIN_PORT", 5000))
-    socketio.run(app, host="0.0.0.0", port=port, debug=True)
+    # Default to loopback — expose to the LAN only explicitly via DARKWIN_HOST.
+    host = os.environ.get("DARKWIN_HOST", "127.0.0.1")
+    socketio.run(app, host=host, port=port, debug=True)
