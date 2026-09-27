@@ -153,15 +153,28 @@ def doctor(fix: bool):
 
 
 @cli.command()
-def update():
+@click.option("--force", is_flag=True, default=False, help="Discard local modifications and force sync to origin/main.")
+def update(force):
     """Pull the latest DARKWIN updates from git and re-verify tools.
 
     \b
     Runs git pull, then re-checks all tool binaries.
+    Pass --force to cleanly overwrite local conflicts with remote main.
     """
     import subprocess
     console.print("[bold cyan]Updating DARKWIN repository...[/bold cyan]")
-    subprocess.run(["git", "pull"], check=False)
+    if force:
+        console.print("[yellow]Force mode: Discarding local workspace conflicts & resetting to origin/main...[/yellow]")
+        subprocess.run(["git", "fetch", "origin", "main"], check=False)
+        subprocess.run(["git", "reset", "--hard", "origin/main"], check=False)
+        subprocess.run(["git", "clean", "-fd"], check=False)
+    else:
+        res = subprocess.run(["git", "pull"], check=False)
+        if res.returncode != 0:
+            console.print("\n[bold yellow]⚠ Git pull halted due to local uncommitted files or conflicts.[/bold yellow]")
+            console.print("[dim]To discard local conflicts and sync cleanly, run:[/dim]")
+            console.print("  [bold green]darkwin update --force[/bold green]\n")
+
     console.print("[bold cyan]Re-running tool verification...[/bold cyan]")
 
     from core.config_loader import load_config
