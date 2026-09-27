@@ -4,6 +4,7 @@ Extracts JS files from a target and parses them for endpoints, secrets, and link
 """
 
 import re
+import shlex
 import subprocess
 from pathlib import Path
 from core import engine
@@ -45,8 +46,11 @@ def run(target: str, output_dir: str) -> None:
     # Step 2: Extract links from JS files via first URL
     first_js = Path(js_files_out).read_text(encoding="utf-8").splitlines()
     if first_js:
+        # JS URLs come from live web pages (subjs output) and may contain
+        # shell metacharacters — quote before embedding in the shell string.
+        js_arg = shlex.quote(first_js[0].strip())
         engine.run_command(
-            f"linkfinder -i {first_js[0].strip()} -o cli > {js_links_out}",
+            f"linkfinder -i {js_arg} -o cli > {js_links_out}",
             log_file=log_file,
             tool_name="linkfinder",
             target=target,
