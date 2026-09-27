@@ -202,6 +202,7 @@ def dashboard(port):
 
 def _start_dashboard(port=5000):
     """Start the Flask dashboard backend in a background thread."""
+    import os
     import threading
     try:
         from dashboard.backend.app import create_app
@@ -210,13 +211,16 @@ def _start_dashboard(port=5000):
         import logging
         log = logging.getLogger('werkzeug')
         log.setLevel(logging.ERROR)
-        
+
+        # Default to loopback so the dashboard isn't exposed on the LAN unless
+        # the operator explicitly opts in via DARKWIN_HOST=0.0.0.0.
+        host = os.environ.get("DARKWIN_HOST", "127.0.0.1")
         thread = threading.Thread(
-            target=lambda: socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True),
+            target=lambda: socketio.run(app, host=host, port=port, debug=False, allow_unsafe_werkzeug=True),
             daemon=True,
         )
         thread.start()
-        console.print(f"[bold green]✔ Backend running on port {port}[/bold green]")
+        console.print(f"[bold green]✔ Backend running on {host}:{port}[/bold green]")
     except ImportError:
         console.print("[bold red]✗ Dashboard dependencies missing.[/bold red]")
         console.print("[dim]Run: pip install flask flask-socketio flask-cors[/dim]")
