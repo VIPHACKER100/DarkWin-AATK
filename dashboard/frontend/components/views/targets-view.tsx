@@ -422,12 +422,9 @@ export function TargetsView({
                         </a>
                         <button
                           onClick={() => {
-                            const iframe = document.getElementById("executive-report-frame") as HTMLIFrameElement;
-                            if (iframe?.contentWindow) {
-                              iframe.contentWindow.print();
-                            } else {
-                              window.open(getReportUrl(currentTargetObj.target, selectedSession), "_blank");
-                            }
+                            const reportUrl = getReportUrl(currentTargetObj.target, selectedSession);
+                            const sep = reportUrl.includes("?") ? "&" : "?";
+                            window.open(`${reportUrl}${sep}print=1`, "_blank");
                           }}
                           className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/50 transition-colors"
                           title="Print or save as PDF"
